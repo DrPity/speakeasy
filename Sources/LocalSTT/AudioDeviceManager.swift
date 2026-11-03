@@ -43,7 +43,14 @@ final class AudioDeviceManager {
             mediaType: .audio,
             position: .unspecified
         )
-        devices = session.devices.map { Device(id: $0.uniqueID, name: $0.localizedName) }
+        devices = session.devices
+            .filter {
+                !DeviceSelectionPolicy.isHidden(
+                    uid: $0.uniqueID,
+                    isPrivateAggregate: CoreAudioHelpers.isPrivateAggregate(uid: $0.uniqueID)
+                )
+            }
+            .map { Device(id: $0.uniqueID, name: $0.localizedName) }
 
         selectedUID = DeviceSelectionPolicy.resolve(
             saved: UserDefaults.standard.string(forKey: Self.defaultsKey),

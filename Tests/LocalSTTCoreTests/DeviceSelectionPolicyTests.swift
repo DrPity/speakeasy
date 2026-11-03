@@ -54,4 +54,17 @@ struct DeviceSelectionPolicyTests {
         )
         #expect(selection.isEmpty)
     }
+
+    @Test("Core Audio's per-app aggregate is hidden from the mic list")
+    func hidesInternalAggregate() {
+        // Exactly what showed up in the picker on 2026-11-03 (our own engine's).
+        #expect(DeviceSelectionPolicy.isHidden(uid: "CADefaultDeviceAggregate-57341-0", isPrivateAggregate: false))
+        #expect(DeviceSelectionPolicy.isHidden(uid: "AnyOtherUID", isPrivateAggregate: true))
+    }
+
+    @Test("Real microphones and user-built aggregates stay listed")
+    func keepsRealDevices() {
+        #expect(!DeviceSelectionPolicy.isHidden(uid: "BuiltInMicrophoneDevice", isPrivateAggregate: false))
+        #expect(!DeviceSelectionPolicy.isHidden(uid: "~:AMS2_Aggregate:0", isPrivateAggregate: false))
+    }
 }
