@@ -1,0 +1,75 @@
+name: Release
+
+# Push a version tag to publish a downloadable build:
+#   git tag v1.0.0 && git push origin v1.0.0
+# The workflow builds, tests, stamps the version into Info.plist, zips
+# Speakeasy.app and attaches it to a GitHub Release for that tag.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write   # create the release and upload the zip
+
+jobs:
+  release:
+    # Apple silicon on macOS 26, the oldest image with the macOS 26 SDK.
+    runs-on: macos-26
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          sw_vers
+          swift --version
+
+      - name: Test
+        run: ./scripts/test.sh
+
+      - name: Stamp the version from the tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" Info.plist
+
+      - name: Build and package Speakeasy.app
+        # No signing identity on the runner, so build.sh signs ad-hoc.
+        run: bash build.sh
+
+      - name: Zip
+        run: |
+          ZIP="Speakeasy-$VERSION.zip"
+          # ditto keeps the bundle's symlinks, permissions and signature intact.
+          ditto -c -k --sequesterRsrc --keepParent Speakeasy.app "$ZIP"
+          shasum -a 256 "$ZIP" > "$ZIP.sha256"
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<EOF
+          ## Install
+
+          1. Download **$ZIP** below and unzip it.
+          2. Move **Speakeasy.app** into **Applications**.
+          3. Open it. macOS will refuse at first because the app isn't notarised by Apple:
+             go to **System Settings › Privacy & Security**, scroll down and click **Open Anyway**.
+             (Or in Terminal: \`xattr -dr com.apple.quarantine /Applications/Speakeasy.app\`.)
+          4. Allow **Microphone** and **Speech Recognition** when asked, then turn on
+             Speakeasy under **Privacy & Security › Accessibility**. The panel's checklist
+             walks you through it.
+
+          Hold **F5** (\`fn\` + \`F5\` on a MacBook), speak, let go.
+
+          Requires macOS 26 or newer on Apple silicon.
+          Updating? macOS may ask for the permissions again, because each build has a new signature.
+
+          SHA-256: \`$(cut -d' ' -f1 "$ZIP.sha256")\`
+          EOF
+          gh release create "$GITHUB_REF_NAME" "$ZIP" "$ZIP.sha256" \
+            --title "Speakeasy $VERSION" \
+            --notes-file notes.md

@@ -55,6 +55,18 @@ There's no window and no Dock icon; the utility lives entirely in the menu bar.
 - Speech recognition runs **on this Mac** (Apple `SpeechAnalyzer`); the app
   contains no networking code. Details below.
 
+## Download
+
+Get the latest **Speakeasy-x.y.z.zip** from
+[Releases](https://github.com/uxpresso-martinis/speakeasy/releases/latest)
+(macOS 26 or newer, Apple silicon). Unzip it and move **Speakeasy.app** into
+**Applications**.
+
+The app isn't notarised by Apple, so macOS blocks the first launch. Go to
+**System Settings › Privacy & Security**, scroll down and click **Open Anyway**
+(or run `xattr -dr com.apple.quarantine /Applications/Speakeasy.app`). Then
+follow the checklist in the menu-bar panel to grant the three permissions.
+
 ## Motivation
 
 The built-in system dictation is serviceable, but this offers a compact,
@@ -192,6 +204,20 @@ editing the SVG, run `make icon` (`scripts/make-icon.sh`) to regenerate it.
 `CODESIGN_IDENTITY` it signs ad-hoc — that runs fine, but since the signature
 differs on each build, macOS drops your permission approvals every time you
 rebuild.
+
+### Releasing
+
+Push a version tag; the Release workflow (`.github/workflows/release.yml`)
+tests, builds, stamps the version into `Info.plist`, zips the app and
+publishes it as a GitHub Release with install notes and a SHA-256:
+
+```sh
+git tag v1.0.1 && git push origin v1.0.1
+```
+
+Release builds are signed ad-hoc (the runner has no signing identity) and not
+notarised. Notarisation, which removes the "Open Anyway" step, needs a paid
+Apple Developer account.
 
 ## Tests
 
