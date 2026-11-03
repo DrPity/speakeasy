@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Speakeasy app icon: "Coupe Wave", Mint on Ink colourway. Source for AppIcon.icns (scripts/make-icon.sh). -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#232936"/>
+      <stop offset="1" stop-color="#0C0F15"/>
+    </linearGradient>
+    <clipPath id="bowl">
+      <path d="M330 374H694C694 522 604 586 512 586C420 586 330 522 330 374Z"/>
+    </clipPath>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <g clip-path="url(#bowl)">
+    <path d="M300 446Q360 402 420 446T540 446T660 446T780 446V620H300Z" fill="#3BEFA6"/>
+  </g>
+  <path d="M330 374H694C694 522 604 586 512 586C420 586 330 522 330 374Z" fill="none" stroke="#E8FFF5" stroke-width="22" stroke-linejoin="round"/>
+  <path d="M512 590V768M418 778H606" fill="none" stroke="#E8FFF5" stroke-width="22" stroke-linecap="round"/>
+  <g fill="#3BEFA6">
+    <circle cx="610" cy="318" r="14" opacity="0.95"/>
+    <circle cx="648" cy="262" r="10" opacity="0.75"/>
+    <circle cx="618" cy="214" r="7" opacity="0.55"/>
+  </g>
+</svg>

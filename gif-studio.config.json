@@ -1,0 +1,18 @@
+{
+  "assetsDir": "marketing/gifs",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "mask": [],
+  "render": {
+    "fps": 30,
+    "scale": 2,
+    "gifFps": 20,
+    "gifScale": 1,
+    "formats": [
+      "gif",
+      "mp4"
+    ]
+  }
+}

@@ -1,0 +1,216 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Speakeasy — hold, speak, release</title>
+<!--
+  Synthetic scene of Speakeasy (21.12): rebuilt from the design canvas and the app's own tokens.
+  Everything visible is driven by the timeline (tween / type / call), never timers or CSS animation,
+  so seek(t) renders the exact frame for any t. The coupe uses the same geometry and motion as
+  Sources/LocalSTT/CoupeGlyph.swift + Sources/LocalSTTCore/CoupeAnimation.swift.
+-->
+<style>
+  :root {
+    --ink: #0C0F15; --panel: #141922; --raised: #232936; --glass: #E8FFF5;
+    --grey: #8FA19A; --grey2: #B8C6C0; --mint: #3BEFA6; --desk: #3A4150;
+  }
+  #stage { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; background: var(--desk); color: var(--glass); }
+  .menubar { position: absolute; left: 0; top: 0; width: 960px; height: 26px; background: #1A1C21; display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 0 16px; box-sizing: border-box; color: #E8E8EA; font-size: 13px; }
+  .menubar .left { position: absolute; left: 16px; display: flex; gap: 18px; font-size: 13px; }
+  .menubar .left b { font-weight: 700; }
+  .status-item { width: 30px; height: 22px; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
+  .window { position: absolute; left: 130px; top: 58px; width: 700px; height: 330px; background: #FBFBFA; border-radius: 12px; overflow: hidden; box-shadow: 0 22px 50px rgba(0,0,0,.38), 0 0 0 1px rgba(0,0,0,.12); }
+  .titlebar { height: 38px; background: #EEEEEC; border-bottom: 1px solid #DDDDDA; display: flex; align-items: center; gap: 8px; padding: 0 14px; }
+  .dot { width: 12px; height: 12px; border-radius: 6px; }
+  .titlebar .name { flex: 1; text-align: center; font-size: 13px; color: #55585E; margin-right: 52px; }
+  .note { padding: 26px 36px; color: #1E2228; font-size: 17px; line-height: 26px; }
+  .note h1 { margin: 0 0 14px; font-size: 24px; line-height: 30px; font-weight: 700; }
+  .note p { margin: 0 0 10px; }
+  .caret { display: inline-block; width: 2px; height: 20px; vertical-align: -4px; background: #1E2228; margin-left: 1px; }
+  .hud { position: absolute; left: 220px; top: 418px; width: 520px; box-sizing: border-box; padding: 12px 18px 12px 12px; background: rgba(12,15,21,.95); border: 1px solid rgba(232,255,245,.10); border-radius: 26px; box-shadow: 0 14px 34px rgba(0,0,0,.45); display: flex; align-items: flex-start; gap: 12px; }
+  .badge { width: 40px; height: 40px; border-radius: 20px; background: var(--raised); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .badge.done { background: var(--mint); }
+  .hud-text { flex: 1; min-width: 0; padding-top: 9px; font-size: 16px; line-height: 22px; font-weight: 500; min-height: 22px; }
+  .hud-text .vol { color: var(--grey2); }
+  .hud-text .muted { color: var(--grey); }
+  .hud-side { padding-top: 11px; font-size: 12px; color: var(--grey); font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+  .hint { position: absolute; left: 24px; top: 498px; display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 8px; border-radius: 18px; background: rgba(12,15,21,.72); color: var(--glass); font-size: 14px; }
+  .keys { display: flex; gap: 5px; }
+  .key { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13px; padding: 3px 9px; border-radius: 7px; background: var(--raised); border: 1px solid rgba(232,255,245,.18); box-shadow: 0 2px 0 rgba(232,255,245,.18); }
+  .key.down { background: var(--mint); color: var(--ink); border-color: var(--mint); box-shadow: 0 0 0 rgba(0,0,0,0); transform: translateY(2px); }
+  .private { position: absolute; right: 24px; top: 504px; font-size: 13px; color: var(--grey2); display: flex; gap: 6px; align-items: center; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script type="module">
+  import {createScene} from '/__studio/runtime.js';
+
+  const W = 960, H = 540;
+  const scene = createScene({width: W, height: H});
+
+  // ---- Timeline (ms) -------------------------------------------------------
+  const KEY_DOWN = 900;           // key pressed, capsule appears
+  const SPEECH_START = 1250;      // first word
+  const WORD_GAP = 215;           // between words
+  const RELEASE = 4700;           // key released
+  const TYPE_AT = RELEASE + 180;  // app starts typing into the note
+  const SENTENCE = 'Pair with Lea on the onboarding copy, then review the vocabulary edit before lunch.';
+  const WORDS = SENTENCE.split(' ');
+  const VOLATILE = 3;             // newest words still grey (may change)
+
+  // ---- Coupe glyph (same geometry as CoupeGlyph.swift) --------------------
+  const BOWL = 'M4 6H20C20 11.6 16.4 14.5 12 14.5C7.6 14.5 4 11.6 4 6Z';
+  const coupeSvg = (id, size, stroke, fill, width) => `
+    <svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">
+      <defs><clipPath id="${id}-clip"><path d="${BOWL}"/></clipPath></defs>
+      <path id="${id}-liquid" clip-path="url(#${id}-clip)" fill="${fill}" d=""/>
+      <path id="${id}-rest" fill="none" stroke="${stroke}" stroke-width="1.2" stroke-linecap="round" d=""/>
+      <path d="${BOWL}" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-linejoin="round"/>
+      <path d="M12 14.5V20M8.5 20.5H15.5" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round"/>
+      <circle id="${id}-b1" r="1.1" fill="${fill}" cx="15" cy="0" opacity="0"/>
+      <circle id="${id}-b2" r="0.8" fill="${fill}" cx="17.6" cy="0" opacity="0"/>
+    </svg>`;
+
+  // CoupeAnimation.swift, ported 1:1.
+  const WAVELENGTH = 7.6, BUBBLE_PERIOD = 1.4, DRAIN_PERIOD = 1.1;
+  const waveY = (x, base, amp, off) => base + amp * Math.sin((x + off) / WAVELENGTH * 2 * Math.PI);
+  const waveOffset = (s) => (s * 6) % WAVELENGTH;
+  function surfaceY(mode, level, s) {
+    if (mode === 'listening') return 11.2 - 3.0 * Math.min(Math.max(level, 0), 1);
+    if (mode === 'finishing') return 11.8 + 0.8 * Math.sin(s * 2 * Math.PI / DRAIN_PERIOD);
+    return null;
+  }
+  function bubble(x, s, delay) {
+    let p = ((s + delay) / BUBBLE_PERIOD) % 1; if (p < 0) p += 1;
+    return {x, y: 5 - 4.2 * p, o: Math.min(Math.max(p < 0.25 ? p / 0.25 : 1 - (p - 0.25) / 0.75, 0), 1)};
+  }
+  function liquidD(surface, amp, off) {
+    let d = `M2 ${waveY(2, surface, amp, off).toFixed(2)}`;
+    for (let x = 2.5; x <= 22; x += 0.5) d += `L${x} ${waveY(x, surface, amp, off).toFixed(2)}`;
+    return d + 'L22 16L2 16Z';
+  }
+  function restD(off) {
+    let d = `M5.6 ${waveY(5.6, 9.6, 0.55, off).toFixed(2)}`;
+    for (let x = 6; x <= 18.4; x += 0.4) d += `L${x.toFixed(1)} ${waveY(x, 9.6, 0.55, off).toFixed(2)}`;
+    return d;
+  }
+  function drawCoupe(id, mode, level, ms) {
+    const s = ms / 1000;
+    const moving = mode === 'listening' || mode === 'finishing';
+    const off = waveOffset(moving ? s : 0);
+    const surface = surfaceY(mode, level, s);
+    document.getElementById(`${id}-liquid`).setAttribute('d', surface == null ? '' : liquidD(surface, mode === 'finishing' ? 0.35 : 0.7, off));
+    document.getElementById(`${id}-liquid`).setAttribute('opacity', mode === 'finishing' ? '0.7' : '1');
+    document.getElementById(`${id}-rest`).setAttribute('d', surface == null ? restD(off) : '');
+    const bubbles = mode === 'listening' ? [bubble(15, s, 0), bubble(17.6, s, BUBBLE_PERIOD / 2)] : [];
+    ['b1', 'b2'].forEach((b, i) => {
+      const el = document.getElementById(`${id}-${b}`);
+      el.setAttribute('cy', bubbles[i] ? bubbles[i].y.toFixed(2) : '0');
+      el.setAttribute('opacity', bubbles[i] ? bubbles[i].o.toFixed(2) : '0');
+    });
+  }
+  // A believable, deterministic voice level: syllable bumps under a slower phrase envelope.
+  const voiceLevel = (ms) => {
+    if (ms < SPEECH_START - 150 || ms > RELEASE - 120) return 0.06;
+    const syllables = Math.abs(Math.sin(ms / 95)) * (0.55 + 0.45 * Math.sin(ms / 410));
+    return 0.25 + 0.6 * Math.max(0, syllables);
+  };
+  const modeAt = (ms) => ms < KEY_DOWN ? 'idle' : ms < RELEASE ? 'listening' : ms < RELEASE + 900 ? 'finishing' : 'idle';
+
+  // ---- Desktop -------------------------------------------------------------
+  scene.el('div', {className: 'menubar', html: `
+    <div class="left"><b>Notes</b><span>File</span><span>Edit</span><span>Format</span><span>View</span></div>
+    <div class="status-item" id="status-item">${coupeSvg('menu', 17, '#E8E8EA', '#E8E8EA', 2)}</div>
+    <span>Tue 3 Nov 09:41</span>`});
+
+  const win = scene.el('div', {className: 'window', html: `
+    <div class="titlebar">
+      <span class="dot" style="background:#FF5F57"></span><span class="dot" style="background:#FEBC2E"></span><span class="dot" style="background:#28C840"></span>
+      <span class="name">Standup notes</span>
+    </div>
+    <div class="note">
+      <h1>Standup — Tuesday</h1>
+      <p>Yesterday: shipped the capture fix for mismatched sample rates.</p>
+      <p>Today: <span id="typed"></span><span class="caret" id="caret"></span></p>
+    </div>`});
+  const typed = win.querySelector('#typed');
+  const caret = win.querySelector('#caret');
+
+  // ---- Capsule overlay -----------------------------------------------------
+  const hud = scene.el('div', {className: 'hud', html: `
+    <div class="badge" id="badge">${coupeSvg('hud', 24, '#E8FFF5', '#3BEFA6', 1.6)}</div>
+    <div class="hud-text" id="hud-text"></div>
+    <div class="hud-side" id="hud-side"></div>`});
+  const badge = hud.querySelector('#badge');
+  const hudText = hud.querySelector('#hud-text');
+  const hudSide = hud.querySelector('#hud-side');
+  const coupeBadge = badge.innerHTML;
+  const checkBadge = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12.5L10.2 16.4L18 8.4" fill="none" stroke="#0C0F15" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  // ---- Hint chip + privacy line ------------------------------------------
+  const hint = scene.el('div', {className: 'hint', html: '<span class="keys"><span class="key">fn</span><span class="key">F5</span></span><span id="hint-text"></span>'});
+  const keys = [...hint.querySelectorAll('.key')];
+  const hintText = hint.querySelector('#hint-text');
+  scene.el('div', {className: 'private', html: '<svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L19.5 6V11.5C19.5 16 16.3 19.4 12 21C7.7 19.4 4.5 16 4.5 11.5V6Z" fill="none" stroke="#B8C6C0" stroke-width="2.2" stroke-linejoin="round"/></svg>Transcribed on this Mac'});
+
+  // ---- Motion --------------------------------------------------------------
+  scene.set(hud, 0, {opacity: 0});
+  scene.fadeIn(hud, KEY_DOWN, 260, {y: 12});
+  scene.fadeOut(hud, RELEASE + 1500, 360);
+
+  // Note text: the app types the sentence after release (fast, like real keystrokes).
+  const typedEnd = scene.type(typed, {at: TYPE_AT, text: SENTENCE, cps: 48, caret: false, seed: 7});
+  const LOOP_END = typedEnd + 2300;
+  scene.fadeOut(typed, LOOP_END - 650, 450);   // reset for a seamless loop
+
+  // Every frame: coupes, HUD content, caret, hint chip.
+  scene.call(0, LOOP_END, (_p, t) => {
+    const mode = modeAt(t);
+    drawCoupe('menu', mode, voiceLevel(t), t);
+
+    const released = t >= RELEASE;
+    const delivered = t >= RELEASE + 250;
+    if (delivered !== badge.classList.contains('done')) {
+      badge.classList.toggle('done', delivered);
+      badge.innerHTML = delivered ? checkBadge : coupeBadge;
+    }
+    if (!delivered) drawCoupe('hud', mode, voiceLevel(t), t);
+
+    // HUD text: words arrive; the newest VOLATILE are grey until speech ends.
+    const heard = Math.max(0, Math.min(WORDS.length, Math.floor((t - SPEECH_START) / WORD_GAP) + 1));
+    if (t < SPEECH_START) {
+      hudText.innerHTML = '<span class="muted">Listening…</span>';
+    } else {
+      const settledCount = released ? heard : Math.max(0, heard - VOLATILE);
+      const settled = WORDS.slice(0, settledCount).join(' ');
+      const volatile = WORDS.slice(settledCount, heard).join(' ');
+      hudText.innerHTML = `${settled}${settled && volatile ? ' ' : ''}<span class="vol">${volatile}</span>`;
+    }
+    const seconds = Math.max(0, Math.floor((Math.min(t, RELEASE) - KEY_DOWN) / 1000));
+    hudSide.textContent = delivered ? 'Typed' : `0:${String(seconds).padStart(2, '0')}`;
+    hudSide.style.fontFamily = delivered ? 'inherit' : '';
+
+    // Caret: blinks while idle, hidden while the app is typing.
+    const typing = t >= TYPE_AT && t < typedEnd + 120;
+    caret.style.opacity = typing ? '1' : (Math.floor(t / 530) % 2 === 0 ? '1' : '0');
+
+    // Hint chip narrates the three steps.
+    const down = t >= KEY_DOWN && t < RELEASE;
+    keys.forEach((k) => k.classList.toggle('down', down));
+    hintText.textContent = t < KEY_DOWN ? 'Hold the key' : down ? 'Speak' : 'Let go — it types for you';
+  });
+
+  scene.section('ready', 'Ready', 0, KEY_DOWN);
+  scene.section('speak', 'Speaking', KEY_DOWN, RELEASE);
+  scene.section('type', 'Typing', RELEASE, typedEnd);
+  scene.section('outro', 'Hold + reset', typedEnd, LOOP_END);
+  scene.beat(KEY_DOWN + 300, 'Hold the key');
+  scene.beat(RELEASE - 300, 'Live transcript');
+  scene.beat(RELEASE + 450, 'Released');
+  scene.beat(typedEnd + 400, 'Typed into the note');
+
+  scene.done({duration: LOOP_END, loop: true});
+</script>
+</body>
+</html>

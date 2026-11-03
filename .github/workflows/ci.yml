@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    # Apple silicon on macOS 26 — the package demands the macOS 26 SDK, so
+    # earlier runner images can't compile it.
+    runs-on: macos-26
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Print toolchain details
+        run: |
+          sw_vers
+          swift --version
+
+      - name: Compile
+        run: swift build -c release
+
+      - name: Run tests
+        run: ./scripts/test.sh
+
+      # Packaging and code-signing the .app bundle happens locally; CI
+      # intentionally skips signing, notarization and the audio / permission
+      # layers, since those require an actual microphone and TCC approvals.
