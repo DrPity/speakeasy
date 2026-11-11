@@ -95,6 +95,9 @@ final class TranscriberEngine {
     @ObservationIgnored private var audioArrived = OSAllocatedUnfairLock(initialState: false)
     @ObservationIgnored private var noAudioTask: Task<Void, Never>?
     @ObservationIgnored private var sessionCapTask: Task<Void, Never>?
+    /// The task assembling the current (or last) session's pipeline. A new
+    /// session waits for it, so two pipelines never exist at once.
+    @ObservationIgnored private var startTask: Task<Void, Never>?
 
     init(locale: Locale = Locale(identifier: Settings.defaultLocaleIdentifier)) {
         self.locale = locale
@@ -199,14 +202,21 @@ final class TranscriberEngine {
 
         state = .starting
         statusText = "Warming up…"
-        let pending = finalizeTask
+        let previousStart = startTask
 
-        Task {
-            // Allow any still-running finalization to complete first. It owns
-            // the old analyzer and must still hand over the old transcript;
-            // constructing a replacement pipeline beneath it used to silently
-            // break the second dictation in a row.
-            await pending?.value
+        startTask = Task {
+            // Never build a pipeline while another one exists. First wait for
+            // a previous start that is still assembling its pipeline: a quick
+            // release-and-press during warm-up used to build a second
+            // AVAudioEngine alongside the first, which wedged Core Audio (and
+            // the main thread with it) in an endless loop. If that earlier
+            // start sees this press, it simply carries on recording and this
+            // task has nothing left to do.
+            await previousStart?.value
+            // Then let any still-running finalization complete. It owns the
+            // old analyzer and must still hand over the old transcript.
+            // Read only now: the earlier start may have just created it.
+            await finalizeTask?.value
 
             switch state {
             case .starting:
