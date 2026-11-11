@@ -18,7 +18,7 @@ struct SettingsView: View {
                 onBack: { screen = .main }
             )
 
-            ScrollView {
+            PanelScroll {
                 VStack(alignment: .leading, spacing: 14) {
                     dictationSection
                     outputSection
@@ -28,8 +28,6 @@ struct SettingsView: View {
                 }
                 .padding(.bottom, 2)
             }
-            .frame(maxHeight: 520)
-            .scrollIndicators(.automatic)
         }
         .onAppear { loginItemEnabled = LoginItem.isEnabled }
     }

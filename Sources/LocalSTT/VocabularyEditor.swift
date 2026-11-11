@@ -19,14 +19,13 @@ struct VocabularyEditor: View {
                 onBack: { screen = .settings }
             )
 
-            ScrollView {
+            PanelScroll {
                 VStack(alignment: .leading, spacing: 14) {
                     termsSection
                     rulesSection
                 }
                 .padding(.bottom, 2)
             }
-            .frame(maxHeight: 520)
 
             if let error = model.vocabularyError {
                 Text(error).font(.system(size: 12)).foregroundStyle(Theme.amber)

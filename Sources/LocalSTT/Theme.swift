@@ -252,3 +252,36 @@ struct FlowLayout: Layout {
         return rows
     }
 }
+
+// MARK: - Panel scrolling
+
+/// The tallest a scrolling panel screen (Preferences, Vocabulary) grows before
+/// it scrolls. Snapshot rendering sets it to `.infinity` to draw the whole
+/// screen without a scroll view.
+private struct PanelScrollCapKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 520
+}
+
+extension EnvironmentValues {
+    var panelScrollCap: CGFloat {
+        get { self[PanelScrollCapKey.self] }
+        set { self[PanelScrollCapKey.self] = newValue }
+    }
+}
+
+/// Wraps panel content in a scroll view capped at `panelScrollCap`, or shows
+/// it in full when the cap is infinite.
+struct PanelScroll<Content: View>: View {
+    @Environment(\.panelScrollCap) private var cap
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        if cap.isFinite {
+            ScrollView { content }
+                .frame(maxHeight: cap)
+                .scrollIndicators(.automatic)
+        } else {
+            content
+        }
+    }
+}

@@ -15,45 +15,93 @@ There's no window and no Dock icon; the utility lives entirely in the menu bar.
 - **Push-to-talk anywhere** — hold the talk key (default **F5**, so `fn` + `F5`
   on a MacBook), speak, let go. Any key, key combination or a lone modifier
   such as Control can be the talk key.
+
+  <img src="docs/images/talk-key.png" width="364" alt="The panel's hint: Hold F5 and speak. The text is typed wherever your cursor is.">
+
 - **Hold or toggle** — hold while speaking, or tap once to start and again to
   finish for long dictation.
+
+  <img src="docs/images/hold-or-toggle.png" width="364" alt="Preferences: Shortcut, Hold to talk or Tap to toggle, and the Talk key with a Change button">
+
 - **Types into any app** — the text lands at the cursor as simulated
   keystrokes, without touching the clipboard. Optional paste mode for speed.
+
+  <img src="docs/images/types-anywhere.png" width="600" alt="A dictated sentence typed into a note at the cursor">
+
 - **Escape discards** (optional) — throw away a dictation instead of typing it.
+
+  <img src="docs/images/escape.png" width="364" alt="Preferences: Escape discards, only while you're dictating">
+
 - **Many languages** — every language Apple's on-device recogniser offers;
   macOS fetches a language's model the first time you pick it.
+
+  <img src="docs/images/language.png" width="364" alt="Preferences: Dictation language picker set to English (United States)">
 
 **Seeing what's happening**
 - **Live overlay** — a capsule at the bottom of the screen shows up to two
   lines of transcript as you speak (still-changing words in grey), a timer,
   and a ✓ once the text has been typed. It never steals focus.
+
+  <img src="docs/images/overlay.gif" width="568" alt="The overlay filling with words as they are spoken, newest in grey, then a check mark once typed">
+
 - **The glass fills with your voice** — the coupe in the overlay and the
   menu bar rises and sloshes with your input level, so a dead mic is obvious.
+
+  <img src="docs/images/glass.gif" width="120" alt="The coupe glass filling and sloshing with the voice level">
+
 - **Animated menu-bar icon** — idle, listening, finishing and needs-setup
   states; a template image that fits light, dark and tinted menu bars.
+
+  <img src="docs/images/menubar.gif" width="240" alt="The menu-bar icon on a light and a dark menu bar, cycling through idle, listening, finishing and needs setup">
+
 - **No-audio warning** — if the microphone delivers nothing, the overlay
   turns amber and says so while you're still holding the key.
+
+  <img src="docs/images/no-audio.png" width="568" alt="The overlay in amber: No audio from the microphone">
 
 **Accuracy**
 - **Personal vocabulary** — names and jargon handed to the recogniser before
   you speak, so they come out spelled your way.
+
+  <img src="docs/images/vocabulary.png" width="364" alt="Vocabulary: words like Speakeasy, SwiftUI and Johnny.Decimal">
+
 - **Find & replace rules** — exact-match swaps on the finished text
   (“eye phone” → “iPhone”), each with its own on/off and case switch.
+
+  <img src="docs/images/find-replace.png" width="364" alt="Find and replace rules such as eye phone to iPhone, each with an on/off and a case switch">
 
 **Setup and comfort**
 - **Microphone picker** — including multi-channel audio interfaces; a
   pre-dictation check handles input and output devices that run at different
   sample rates.
+
+  <img src="docs/images/microphone.png" width="364" alt="The microphone picker set to MacBook Pro Microphone">
+
 - **Guided first run** — a three-step checklist for Microphone, Speech
   Recognition and Accessibility, with the right button for each step.
+
+  <img src="docs/images/first-run.png" width="300" alt="The first-run checklist: Microphone, Speech Recognition, Accessibility">
+
 - **Recent transcripts** (optional) — the last 10, in memory only, to copy
   again; gone when you quit.
+
+  <img src="docs/images/recent.png" width="364" alt="Recent transcripts, memory only, each with a copy button">
+
 - **Hover help** — every preference has an ⓘ explaining what it does.
+
+  <img src="docs/images/hover-help.png" width="364" alt="Preferences rows, each with an info badge">
+
 - **Start at login** (optional).
+
+  <img src="docs/images/login.png" width="364" alt="Preferences: Open at login">
 
 **Private by design**
 - Speech recognition runs **on this Mac** (Apple `SpeechAnalyzer`); the app
   contains no networking code. Details below.
+
+  <img src="docs/images/private.png" width="364" alt="Audio and text never leave this Mac; English (United States), on-device">
+
+Images are rendered from the app itself (`scripts/readme-images.sh`).
 
 ## Download
 

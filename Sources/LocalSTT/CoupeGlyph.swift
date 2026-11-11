@@ -70,13 +70,23 @@ struct CoupeGlyphView: View {
     var outline: Color = Theme.glass
     var liquid: Color = Theme.mint
     var badge: Color = Theme.amber
+    /// Draws one fixed moment instead of animating (snapshot rendering).
+    var frozenTime: Double? = nil
 
     private var isMoving: Bool { mode == .listening || mode == .finishing }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !isMoving)) { context in
-            Canvas { graphics, canvasSize in
-                draw(in: &graphics, size: canvasSize, time: context.date.timeIntervalSinceReferenceDate)
+        Group {
+            if let frozenTime {
+                Canvas { graphics, canvasSize in
+                    draw(in: &graphics, size: canvasSize, time: frozenTime)
+                }
+            } else {
+                TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !isMoving)) { context in
+                    Canvas { graphics, canvasSize in
+                        draw(in: &graphics, size: canvasSize, time: context.date.timeIntervalSinceReferenceDate)
+                    }
+                }
             }
         }
         .frame(width: size, height: size)
