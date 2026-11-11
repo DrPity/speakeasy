@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Compile Speakeasy and package it into a code-signed .app bundle.
-# Needs nothing beyond the Command Line Tools (Swift 6.3 + macOS 26 SDK) — Xcode is unnecessary.
+# Needs Xcode or the Command Line Tools (Swift 6.2+, macOS 26 SDK); see scripts/swiftw.
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -8,9 +8,10 @@ cd "$(dirname "$0")"
 APP="Speakeasy.app"
 BIN="LocalSTT"   # internal executable name; held constant so TCC approvals survive
 BUNDLE_ID="com.mschade.localstt"   # held constant so macOS retains previously granted permissions
+ENTITLEMENTS="Speakeasy.entitlements"
 
 echo "==> Building (release)..."
-swift build -c release
+./scripts/swiftw build -c release
 
 echo "==> Packaging ${APP} ..."
 rm -rf "${APP}"
@@ -29,11 +30,11 @@ cp "Resources/AppIcon.icns" "${APP}/Contents/Resources/AppIcon.icns"   # regener
 #      (picked up automatically, sparing you the export in every shell).
 #   3. Ad-hoc ("-") as a fallback — with a WARNING that approvals vanish on rebuild.
 #
-# IMPORTANT: the hardened runtime (--options runtime) must stay OFF here. With
-# the hardened runtime active, microphone use demands the audio-input
-# entitlement; lacking it, AVCaptureDevice.requestAccess fails silently (false,
-# no dialog). For a personal, unsandboxed utility the Info.plist usage strings
-# suffice on their own — same as the working v1.
+# The hardened runtime (--options runtime) is ON. It stops other processes from
+# injecting code into Speakeasy and borrowing its Microphone and Accessibility
+# approvals. Under it, microphone use requires the audio-input entitlement in
+# ${ENTITLEMENTS}; without that, AVCaptureDevice.requestAccess fails silently
+# (false, no dialog). Don't drop one without the other.
 SELF_SIGNED="LocalSTT Self-Signed"
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
     IDENTITY="${CODESIGN_IDENTITY}"
@@ -47,7 +48,19 @@ else
 fi
 
 echo "==> Signing (identity: ${IDENTITY})..."
-codesign --force --sign "${IDENTITY}" --identifier "${BUNDLE_ID}" "${APP}"
+codesign --force --sign "${IDENTITY}" --identifier "${BUNDLE_ID}" \
+    --options runtime --entitlements "${ENTITLEMENTS}" "${APP}"
+
+# Fail the build rather than ship a bundle without the hardened runtime or the
+# microphone entitlement.
+# (Output is captured first: `grep -q` closing the pipe early would trip pipefail.)
+codesign --verify --strict "${APP}"
+SIGNATURE="$(codesign -d --verbose=2 "${APP}" 2>&1)"
+[[ "${SIGNATURE}" =~ flags=0x[0-9a-f]+\([a-z,-]*runtime ]] \
+    || { echo "ERROR: ${APP} is not signed with the hardened runtime." >&2; exit 1; }
+SIGNED_ENTITLEMENTS="$(codesign -d --entitlements - "${APP}" 2>/dev/null)"
+[[ "${SIGNED_ENTITLEMENTS}" == *"com.apple.security.device.audio-input"* ]] \
+    || { echo "ERROR: ${APP} lacks the audio-input entitlement." >&2; exit 1; }
 
 echo "Finished ${APP}"
 echo "Start it via:  open ${APP}"

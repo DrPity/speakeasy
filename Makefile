@@ -2,7 +2,7 @@
 
 # Build all targets: the library, the executable and the test bundle.
 build:
-	swift build -c release
+	./scripts/swiftw build -c release
 
 # Execute the test suite (scripts/test.sh covers the Command-Line-Tools-only quirks).
 test:

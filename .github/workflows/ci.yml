@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Re-run by hand when a macOS arm64 runner never picked the job up.
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -20,11 +22,14 @@ jobs:
           swift --version
 
       - name: Compile
-        run: swift build -c release
+        run: ./scripts/swiftw build -c release
 
       - name: Run tests
         run: ./scripts/test.sh
 
-      # Packaging and code-signing the .app bundle happens locally; CI
-      # intentionally skips signing, notarization and the audio / permission
-      # layers, since those require an actual microphone and TCC approvals.
+      # Packages and ad-hoc signs the bundle; build.sh fails if the hardened
+      # runtime or the microphone entitlement is missing. The audio and
+      # permission layers still need a real microphone and TCC approvals, so
+      # they are checked by hand.
+      - name: Package and verify the signature
+        run: bash build.sh

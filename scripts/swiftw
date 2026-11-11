@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# `swift` with a fallback for machines that only have the Command Line Tools.
+#
+# Usage: scripts/swiftw build -c release   |   scripts/swiftw test
+#
+# With full Xcode this is plain `swift`. The Command Line Tools 27.x can't
+# build the package: the default build backend fails ("Unknown error parsing
+# property list") and the macOS 27 SDK needs a SwiftUI macro plugin the CLT
+# doesn't ship. In that case, when a macOS 26 SDK is installed alongside, this
+# builds against it with the native build system instead.
+#
+# Set SPEAKEASY_NO_FALLBACK=1 to skip the detection.
+set -euo pipefail
+
+subcommand="${1:?usage: scripts/swiftw <build|test|...> [args]}"
+shift
+
+EXTRA=()
+developer_dir="$(xcode-select -p 2>/dev/null || true)"
+if [[ -z "${SPEAKEASY_NO_FALLBACK:-}" && -z "${SDKROOT:-}" \
+      && "${developer_dir}" == *CommandLineTools* ]]; then
+    sdk_major="$(xcrun --sdk macosx --show-sdk-version 2>/dev/null | cut -d. -f1)"
+    if [[ -n "${sdk_major}" && "${sdk_major}" -ge 27 ]]; then
+        fallback="$(ls -d "${developer_dir}"/SDKs/MacOSX26.*.sdk 2>/dev/null | sort -V | tail -1 || true)"
+        if [[ -n "${fallback}" ]]; then
+            echo "swiftw: Command Line Tools with the macOS ${sdk_major} SDK; building against $(basename "${fallback}") with the native build system." >&2
+            export SDKROOT="${fallback}"
+            EXTRA+=(--build-system native)
+        else
+            echo "swiftw: warning: the Command Line Tools' macOS ${sdk_major} SDK is known not to build this package, and no macOS 26 SDK was found. Install Xcode if the build fails." >&2
+        fi
+    fi
+fi
+
+exec swift "${subcommand}" ${EXTRA[@]+"${EXTRA[@]}"} "$@"

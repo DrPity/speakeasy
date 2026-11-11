@@ -107,7 +107,7 @@ final class HUDController {
 // MARK: - Content
 
 /// What the overlay displays: a capsule with the coupe badge, up to two lines
-/// of transcript and a timer. Design: "Overlay states (capsule)" on the canvas.
+/// of transcript and a timer.
 struct HUDView: View {
     @Environment(AppModel.self) private var model
 

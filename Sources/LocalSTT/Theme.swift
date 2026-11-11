@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// "Mint on Ink": the palette of the app icon, used across the panel and the
-/// overlay. Design canvas: https://claude.ai/artifact/96LkhEdT5rGvEboiGTB77X
+/// overlay.
 enum Theme {
     // Surfaces, darkest first.
     static let ink = Color(hex: 0x0C0F15)        // overlay, inputs

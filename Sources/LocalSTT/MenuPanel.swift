@@ -9,8 +9,7 @@ enum PanelScreen {
     case vocabulary
 }
 
-/// The dropdown that opens from the menu-bar icon. Design: "Menu-bar panel" on
-/// the canvas (https://claude.ai/artifact/96LkhEdT5rGvEboiGTB77X).
+/// The dropdown that opens from the menu-bar icon.
 struct MenuPanel: View {
     @Environment(AppModel.self) private var model
     @State private var screen: PanelScreen = .main

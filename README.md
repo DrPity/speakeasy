@@ -67,11 +67,28 @@ The app isn't notarised by Apple, so macOS blocks the first launch. Go to
 (or run `xattr -dr com.apple.quarantine /Applications/Speakeasy.app`). Then
 follow the checklist in the menu-bar panel to grant the three permissions.
 
+**Updating.** Quit Speakeasy, replace the app in Applications, open the new
+one. Every release has a new signature, so macOS treats it as a different app:
+the Accessibility switch may still look on but belong to the old build, and
+the talk key then does nothing. Remove Speakeasy from **System Settings ›
+Privacy & Security › Accessibility** with **−** and add it again from the
+panel's checklist, or run:
+
+```sh
+tccutil reset Accessibility com.mschade.localstt
+```
+
 ## Motivation
 
 The built-in system dictation is serviceable, but this offers a compact,
 modifiable, completely local substitute: a single shortcut, on-device speech
 recognition, and output that lands at the insertion point.
+
+## Transparency notice
+
+This project is mostly coded by AI. For someone like me, AI is a great help to
+finally get ideas done and out of their eternal alpha state. I know other people
+might see it differently, and that's why I want to be transparent about it.
 
 ## Privacy & what "local" means here
 
@@ -126,8 +143,7 @@ owner-only (`0600`) and never synchronized anywhere.
 - **Menu-bar icon** — the coupe from the app icon, drawn as a template image.
   While you dictate it animates (liquid follows your voice, bubbles rise);
   a dot marks missing permissions.
-- **Look** — "Mint on Ink", the app icon's palette (`Theme.swift`). Design
-  canvas: <https://claude.ai/artifact/96LkhEdT5rGvEboiGTB77X>.
+- **Look** — "Mint on Ink", the app icon's palette (`Theme.swift`).
 - **Auto-typing** — when you release, the finished text is delivered at the
   insertion point through synthesized Unicode `CGEvent` keystrokes, which works
   in any application and **never involves the clipboard**.
@@ -161,6 +177,7 @@ microphone or permission prompts (`Sources/LocalSTTCore/`):
 | File | Responsibility |
 |------|----------------|
 | `Shortcut.swift` | Shortcut model, storage, display formatting |
+| `PushToTalkMatcher.swift` | Key events → press / release / swallow for the talk key |
 | `AudioMixdown.swift` | Multi-channel → mono mixing and level measurement |
 | `LevelSmoother.swift` | Attack/release easing applied to the level |
 | `TextTransformer.swift` | Exact-match substitution rules |
@@ -174,9 +191,13 @@ microphone or permission prompts (`Sources/LocalSTTCore/`):
 ## Requirements
 
 - **macOS 26 (Tahoe) or newer** on Apple silicon.
-- **Xcode Command Line Tools** (Swift 6.2+). The full Xcode IDE is *not*
-  needed — SwiftPM plus a small packaging script do everything.
-  - Get them via: `xcode-select --install`
+- **Xcode** or the **Xcode Command Line Tools** (Swift 6.2+). SwiftPM plus a
+  small packaging script do everything; the Xcode IDE itself is never opened.
+  - Command Line Tools: `xcode-select --install`
+  - With Command Line Tools 27.x, the macOS 27 SDK can't build the package.
+    `scripts/swiftw` (used by `build.sh` and `make`) detects this and builds
+    against an installed macOS 26 SDK with the native build system instead.
+    Full Xcode needs no workaround.
 
 ## Building & running
 
@@ -205,6 +226,12 @@ editing the SVG, run `make icon` (`scripts/make-icon.sh`) to regenerate it.
 differs on each build, macOS drops your permission approvals every time you
 rebuild.
 
+Every build is signed with the **hardened runtime** and a single entitlement,
+microphone input (`Speakeasy.entitlements`). The hardened runtime stops other
+processes from injecting code into Speakeasy and borrowing its Microphone and
+Accessibility approvals. `build.sh` fails if either is missing from the
+signature.
+
 ### Releasing
 
 Push a version tag; the Release workflow (`.github/workflows/release.yml`)
@@ -218,6 +245,11 @@ git tag v1.0.1 && git push origin v1.0.1
 Release builds are signed ad-hoc (the runner has no signing identity) and not
 notarised. Notarisation, which removes the "Open Anyway" step, needs a paid
 Apple Developer account.
+
+GitHub's macOS arm64 runners are sometimes never assigned and the job fails
+after a long queue. CI can be re-run by hand (`workflow_dispatch`). For a
+release, cancel the stuck run before publishing a locally built zip, so a late
+run can't collide with it.
 
 ## Tests
 
@@ -309,10 +341,18 @@ subsystem `com.mschade.localstt`:
 log show --last 10m --predicate 'subsystem == "com.mschade.localstt"'
 ```
 
+**The talk key does nothing after an update.** See *Updating* under
+[Download](#download): the Accessibility approval belongs to the old build.
+
+**A dictation finished on its own after 10 minutes.** That's the safety cap.
+If the key's release is ever lost (for example, a password field switched on
+Secure Input while you held it), the microphone must not stay open
+indefinitely. The text up to that point is delivered as usual.
+
 ## Additional notes
 
-- A personal, non-sandboxed utility — not hardened-runtime signed and not meant
-  for the App Store.
+- Not sandboxed and not meant for the App Store, but signed with the hardened
+  runtime (see *Building & running*).
 - The default language is **en-US**; it can be changed in the preferences.
 
 ## License

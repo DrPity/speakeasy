@@ -65,6 +65,12 @@ final class TranscriberEngine {
     /// long with nothing, capture is broken rather than slow.
     private static let noAudioTimeout: Duration = .milliseconds(750)
     static let noAudioMessage = "No audio from the microphone — check the input in Audio MIDI Setup or pick another mic."
+    /// Hard ceiling on one dictation. A backstop for a key-up that never
+    /// arrives (Secure Input turned on mid-hold, another app's event tap eating
+    /// it): without it the microphone would stay open indefinitely. Long
+    /// enough for genuine toggle-mode dictation; the session is then finished
+    /// normally, so nothing said is lost.
+    static let maxSessionDuration: Duration = .seconds(600)
 
     private static let log = Logger(subsystem: "com.mschade.localstt", category: "capture")
 
@@ -88,6 +94,7 @@ final class TranscriberEngine {
     /// Flipped by the tap (audio thread) on the first buffer of a session.
     @ObservationIgnored private var audioArrived = OSAllocatedUnfairLock(initialState: false)
     @ObservationIgnored private var noAudioTask: Task<Void, Never>?
+    @ObservationIgnored private var sessionCapTask: Task<Void, Never>?
 
     init(locale: Locale = Locale(identifier: Settings.defaultLocaleIdentifier)) {
         self.locale = locale
@@ -235,6 +242,13 @@ final class TranscriberEngine {
             case .starting:
                 state = .recording
                 statusText = "Listening…"
+                // Cancelled in teardownAudio, so the strong capture is short-lived.
+                sessionCapTask = Task {
+                    try? await Task.sleep(for: Self.maxSessionDuration)
+                    guard !Task.isCancelled, self.state == .recording else { return }
+                    Self.log.notice("Session reached \(Self.maxSessionDuration, privacy: .public); finishing it")
+                    self.stop()
+                }
             case .finalizing:
                 // The key came up while the pipeline was still being assembled.
                 beginFinalize(cancelled: false)
@@ -540,6 +554,8 @@ final class TranscriberEngine {
     private func teardownAudio() {
         noAudioTask?.cancel()
         noAudioTask = nil
+        sessionCapTask?.cancel()
+        sessionCapTask = nil
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
         inputContinuation?.finish()

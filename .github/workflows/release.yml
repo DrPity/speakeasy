@@ -66,7 +66,12 @@ jobs:
           Hold **F5** (\`fn\` + \`F5\` on a MacBook), speak, let go.
 
           Requires macOS 26 or newer on Apple silicon.
-          Updating? macOS may ask for the permissions again, because each build has a new signature.
+          **Updating?** Each build has a new signature, so macOS treats it as a new app.
+          Quit the old version first. If the talk key does nothing afterwards, the
+          Accessibility switch is still on but belongs to the old build: open
+          **System Settings › Privacy & Security › Accessibility**, remove Speakeasy
+          with **−**, then add it again from the panel's checklist
+          (or in Terminal: \`tccutil reset Accessibility com.mschade.localstt\`).
 
           SHA-256: \`$(cut -d' ' -f1 "$ZIP.sha256")\`
           EOF

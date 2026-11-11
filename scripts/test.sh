@@ -21,4 +21,4 @@ if [[ -f "${CLT_LIB}/lib_TestingInterop.dylib" ]]; then
     ARGS+=(-Xlinker -rpath -Xlinker "${CLT_LIB}")
 fi
 
-exec swift test "${ARGS[@]+"${ARGS[@]}"}" "$@"
+exec ./scripts/swiftw test "${ARGS[@]+"${ARGS[@]}"}" "$@"

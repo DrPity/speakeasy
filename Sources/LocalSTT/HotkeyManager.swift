@@ -15,7 +15,9 @@ final class HotkeyManager {
 
     static let escapeKeyCode: Int64 = 53
 
-    private(set) var shortcut: Shortcut
+    private(set) var shortcut: Shortcut {
+        didSet { matcher.shortcut = shortcut }
+    }
     /// Indicates if the tap is installed and live right now.
     private(set) var isActive: Bool = false
 
@@ -33,11 +35,14 @@ final class HotkeyManager {
     private let defaults: UserDefaults
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private var isHeld = false
+    /// Decides press / release / consume for each event (see LocalSTTCore).
+    @ObservationIgnored private var matcher: PushToTalkMatcher
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.shortcut = ShortcutStore.load(from: defaults)
+        let shortcut = ShortcutStore.load(from: defaults)
+        self.shortcut = shortcut
+        self.matcher = PushToTalkMatcher(shortcut: shortcut)
     }
 
     // MARK: - Lifecycle
@@ -89,7 +94,7 @@ final class HotkeyManager {
         runLoopSource = nil
         eventTap = nil
         isActive = false
-        isHeld = false
+        matcher.reset()
     }
 
     /// Store and activate a freshly captured shortcut, rebuilding the tap.
@@ -106,9 +111,12 @@ final class HotkeyManager {
 
     /// Answers true when the event belongs to us and ought to be consumed.
     fileprivate func handle(type: CGEventType, event: CGEvent) -> Bool {
-        // macOS may turn the tap off; switch it back on and let the event through.
+        // macOS may turn the tap off; switch it back on and let the event
+        // through. A key-up sent while it was off is gone, so a hold in
+        // progress ends here instead of recording with nothing to stop it.
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             if let eventTap { CGEvent.tapEnable(tap: eventTap, enable: true) }
+            if matcher.tapInterrupted() == .release { onRelease?() }
             return false
         }
 
@@ -124,46 +132,26 @@ final class HotkeyManager {
             return true
         }
 
-        let flags = event.flags
-
-        if let targetKey = shortcut.keyCode {
-            // An ordinary key, possibly combined with modifiers.
-            let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-            guard keyCode == targetKey, shortcut.modifiersSatisfied(by: flags) else { return false }
-
-            switch type {
-            case .keyDown:
-                let isRepeat = event.getIntegerValueField(.keyboardEventAutorepeat) != 0
-                if !isRepeat, !isHeld {
-                    isHeld = true
-                    onPress?()
-                }
-                return true   // consume it, keeping it out of the focused app
-            case .keyUp:
-                if isHeld {
-                    isHeld = false
-                    onRelease?()
-                }
-                return true
-            default:
-                return false
-            }
-        } else {
-            // Modifier-only shortcut: recognised through flagsChanged on the
-            // chosen modifier(s).
-            guard type == .flagsChanged else { return false }
-            let relevant = shortcut.modifiers.intersection(Shortcut.relevantModifiers)
-            guard !relevant.isEmpty else { return false }
-            let pressed = flags.isSuperset(of: relevant)
-            if pressed, !isHeld {
-                isHeld = true
-                onPress?()
-            } else if !pressed, isHeld {
-                isHeld = false
-                onRelease?()
-            }
-            return false   // modifier keys are never consumed
+        let kind: PushToTalkMatcher.EventKind
+        switch type {
+        case .keyDown: kind = .keyDown
+        case .keyUp: kind = .keyUp
+        case .flagsChanged: kind = .flagsChanged
+        default: return false
         }
+
+        let decision = matcher.handle(
+            kind,
+            keyCode: event.getIntegerValueField(.keyboardEventKeycode),
+            flags: event.flags,
+            isRepeat: event.getIntegerValueField(.keyboardEventAutorepeat) != 0
+        )
+        switch decision.action {
+        case .press: onPress?()
+        case .release: onRelease?()
+        case .none: break
+        }
+        return decision.consume
     }
 }
 

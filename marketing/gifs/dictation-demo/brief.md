@@ -30,7 +30,7 @@ On-device push-to-talk dictation for macOS (menu-bar app). Apple's local SpeechA
 ## Why synthetic
 
 Speakeasy is a native macOS app driven by a global key and a real voice; a browser can't record it. The scene
-rebuilds the real UI from the design canvas (https://claude.ai/artifact/96LkhEdT5rGvEboiGTB77X) and the app's own
+rebuilds the real UI from the app's own
 tokens (`Sources/LocalSTT/Theme.swift`) and coupe geometry/motion (`CoupeGlyph.swift`, `CoupeAnimation.swift`).
 
 ## Style references
