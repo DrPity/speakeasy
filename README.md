@@ -58,7 +58,7 @@ There's no window and no Dock icon; the utility lives entirely in the menu bar.
 ## Download
 
 Get the latest **Speakeasy-x.y.z.zip** from
-[Releases](https://github.com/uxpresso-martinis/speakeasy/releases/latest)
+[Releases](https://github.com/DrPity/speakeasy/releases/latest)
 (macOS 26 or newer, Apple silicon). Unzip it and move **Speakeasy.app** into
 **Applications**.
 
