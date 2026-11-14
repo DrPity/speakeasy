@@ -258,8 +258,8 @@ struct FlowLayout: Layout {
 /// The tallest a scrolling panel screen (Preferences, Vocabulary) grows before
 /// it scrolls. Snapshot rendering sets it to `.infinity` to draw the whole
 /// screen without a scroll view.
-private struct PanelScrollCapKey: EnvironmentKey {
-    static let defaultValue: CGFloat = 520
+struct PanelScrollCapKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 500   // Preferences then matches the main panel's height
 }
 
 extension EnvironmentValues {
@@ -269,17 +269,25 @@ extension EnvironmentValues {
     }
 }
 
-/// Wraps panel content in a scroll view capped at `panelScrollCap`, or shows
-/// it in full when the cap is infinite.
+/// Wraps panel content in a scroll view that is as tall as its content, up to
+/// `panelScrollCap`, or shows it in full when the cap is infinite.
+///
+/// The height is measured and set explicitly: a scroll view with only a
+/// `maxHeight` has no ideal height of its own, so inside the menu-bar window
+/// it collapsed to a fraction of the cap and the screen felt cramped.
 struct PanelScroll<Content: View>: View {
     @Environment(\.panelScrollCap) private var cap
+    @State private var contentHeight: CGFloat = 0
     @ViewBuilder var content: Content
 
     var body: some View {
         if cap.isFinite {
-            ScrollView { content }
-                .frame(maxHeight: cap)
-                .scrollIndicators(.automatic)
+            ScrollView {
+                content.onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
+            }
+            .frame(height: contentHeight > 0 ? min(contentHeight, cap) : cap)
+            .scrollIndicators(.automatic)
+            .scrollBounceBehavior(.basedOnSize)
         } else {
             content
         }

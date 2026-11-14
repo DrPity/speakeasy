@@ -1,410 +1,204 @@
-# Speakeasy — On-Device Push-to-Talk Dictation
+<div align="center">
 
-![Speakeasy: hold fn + F5, speak, let go — the words are typed into the note](marketing/gifs/dictation-demo/final/dictation-demo.gif)
+<img src="Resources/AppIcon.svg" width="112" alt="Speakeasy app icon: a cocktail coupe with a mint waveform">
 
-A compact macOS menu-bar utility providing **hold-to-speak dictation that is
-processed completely on your machine**. Press and hold a system-wide shortcut,
-talk, let go — and what you said is typed directly into whichever application
-currently has focus (terminal, editor, messenger, anything at all).
+# Speakeasy
 
-There's no window and no Dock icon; the utility lives entirely in the menu bar.
+**Hold a key, speak, let go. Your words are typed wherever the cursor is.**<br>
+Dictation for your Mac that never leaves your Mac.
+
+[![Latest release](https://img.shields.io/github/v/release/DrPity/speakeasy?color=3BEFA6&labelColor=0C0F15&label=release)](https://github.com/DrPity/speakeasy/releases/latest)
+[![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20·%20Apple%20silicon-3BEFA6?labelColor=0C0F15)](#install)
+[![On-device](https://img.shields.io/badge/speech-on--device-3BEFA6?labelColor=0C0F15)](#privacy)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-3BEFA6?labelColor=0C0F15)](LICENSE)
+
+**[⬇ Download the latest version](https://github.com/DrPity/speakeasy/releases/latest)**
+
+<img src="marketing/gifs/dictation-demo/final/dictation-demo.gif" width="720" alt="Hold fn + F5, speak, let go: the words are typed into the note">
+
+</div>
+
+> [!NOTE]
+> **Transparency notice:** This project is mostly coded by AI. For someone like me, AI is a great help to finally get ideas done and out of their eternal alpha state. I know other people might see it differently, and that's why I want to be transparent about it.
+
+## Install
+
+1. Download **Speakeasy-x.y.z.zip** from [Releases](https://github.com/DrPity/speakeasy/releases/latest), unzip it and move **Speakeasy.app** into **Applications**.
+2. Open it, then follow the checklist in the menu-bar panel to allow **Microphone**, **Speech Recognition** and **Accessibility**.
+
+> [!IMPORTANT]
+> Speakeasy isn't notarised by Apple yet, so macOS blocks the first launch. Go to **System Settings › Privacy & Security**, scroll down and click **Open Anyway**, or run:
+> ```sh
+> xattr -dr com.apple.quarantine /Applications/Speakeasy.app
+> ```
+
+> [!TIP]
+> **Updating?** Quit Speakeasy and replace the app. If the talk key then does nothing, macOS still holds the Accessibility approval for the old build: remove Speakeasy under **Privacy & Security › Accessibility** with **−** and allow it again from the panel, or run `tccutil reset Accessibility com.mschade.localstt`.
+
+## Use
+
+1. Click into any text field.
+2. Hold <kbd>fn</kbd> + <kbd>F5</kbd> (or just <kbd>F5</kbd>) and speak.
+3. Let go. The text is typed at the cursor.
+
+Change the talk key, switch to tap-to-toggle or pick another language behind the ⚙ in the panel. Every setting has an ⓘ that explains it.
 
 ## Features
 
-**Dictation**
-- **Push-to-talk anywhere** — hold the talk key (default **F5**, so `fn` + `F5`
-  on a MacBook), speak, let go. Any key, key combination or a lone modifier
-  such as Control can be the talk key.
-
-  <img src="docs/images/talk-key.png" width="364" alt="The panel's hint: Hold F5 and speak. The text is typed wherever your cursor is.">
-
-- **Hold or toggle** — hold while speaking, or tap once to start and again to
-  finish for long dictation.
-
-  <img src="docs/images/hold-or-toggle.png" width="364" alt="Preferences: Shortcut, Hold to talk or Tap to toggle, and the Talk key with a Change button">
-
-- **Types into any app** — the text lands at the cursor as simulated
-  keystrokes, without touching the clipboard. Optional paste mode for speed.
-
-  <img src="docs/images/types-anywhere.png" width="600" alt="A dictated sentence typed into a note at the cursor">
-
-- **Escape discards** (optional) — throw away a dictation instead of typing it.
-
-  <img src="docs/images/escape.png" width="364" alt="Preferences: Escape discards, only while you're dictating">
-
-- **Many languages** — every language Apple's on-device recogniser offers;
-  macOS fetches a language's model the first time you pick it.
-
-  <img src="docs/images/language.png" width="364" alt="Preferences: Dictation language picker set to English (United States)">
-
-**Seeing what's happening**
-- **Live overlay** — a capsule at the bottom of the screen shows up to two
-  lines of transcript as you speak (still-changing words in grey), a timer,
-  and a ✓ once the text has been typed. It never steals focus.
-
-  <img src="docs/images/overlay.gif" width="568" alt="The overlay filling with words as they are spoken, newest in grey, then a check mark once typed">
-
-- **The glass fills with your voice** — the coupe in the overlay and the
-  menu bar rises and sloshes with your input level, so a dead mic is obvious.
-
-  <img src="docs/images/glass.gif" width="120" alt="The coupe glass filling and sloshing with the voice level">
-
-- **Animated menu-bar icon** — idle, listening, finishing and needs-setup
-  states; a template image that fits light, dark and tinted menu bars.
-
-  <img src="docs/images/menubar.gif" width="240" alt="The menu-bar icon on a light and a dark menu bar, cycling through idle, listening, finishing and needs setup">
-
-- **No-audio warning** — if the microphone delivers nothing, the overlay
-  turns amber and says so while you're still holding the key.
-
-  <img src="docs/images/no-audio.png" width="568" alt="The overlay in amber: No audio from the microphone">
-
-**Accuracy**
-- **Personal vocabulary** — names and jargon handed to the recogniser before
-  you speak, so they come out spelled your way.
-
-  <img src="docs/images/vocabulary.png" width="364" alt="Vocabulary: words like Speakeasy, SwiftUI and Johnny.Decimal">
-
-- **Find & replace rules** — exact-match swaps on the finished text
-  (“eye phone” → “iPhone”), each with its own on/off and case switch.
-
-  <img src="docs/images/find-replace.png" width="364" alt="Find and replace rules such as eye phone to iPhone, each with an on/off and a case switch">
-
-**Setup and comfort**
-- **Microphone picker** — including multi-channel audio interfaces; a
-  pre-dictation check handles input and output devices that run at different
-  sample rates.
-
-  <img src="docs/images/microphone.png" width="364" alt="The microphone picker set to MacBook Pro Microphone">
-
-- **Guided first run** — a three-step checklist for Microphone, Speech
-  Recognition and Accessibility, with the right button for each step.
-
-  <img src="docs/images/first-run.png" width="300" alt="The first-run checklist: Microphone, Speech Recognition, Accessibility">
-
-- **Recent transcripts** (optional) — the last 10, in memory only, to copy
-  again; gone when you quit.
-
-  <img src="docs/images/recent.png" width="364" alt="Recent transcripts, memory only, each with a copy button">
-
-- **Hover help** — every preference has an ⓘ explaining what it does.
-
-  <img src="docs/images/hover-help.png" width="364" alt="Preferences rows, each with an info badge">
-
-- **Start at login** (optional).
-
-  <img src="docs/images/login.png" width="364" alt="Preferences: Open at login">
-
-**Private by design**
-- Speech recognition runs **on this Mac** (Apple `SpeechAnalyzer`); the app
-  contains no networking code. Details below.
-
-  <img src="docs/images/private.png" width="364" alt="Audio and text never leave this Mac; English (United States), on-device">
-
-Images are rendered from the app itself (`scripts/readme-images.sh`).
-
-## Download
-
-Get the latest **Speakeasy-x.y.z.zip** from
-[Releases](https://github.com/DrPity/speakeasy/releases/latest)
-(macOS 26 or newer, Apple silicon). Unzip it and move **Speakeasy.app** into
-**Applications**.
-
-The app isn't notarised by Apple, so macOS blocks the first launch. Go to
-**System Settings › Privacy & Security**, scroll down and click **Open Anyway**
-(or run `xattr -dr com.apple.quarantine /Applications/Speakeasy.app`). Then
-follow the checklist in the menu-bar panel to grant the three permissions.
-
-**Updating.** Quit Speakeasy, replace the app in Applications, open the new
-one. Every release has a new signature, so macOS treats it as a different app:
-the Accessibility switch may still look on but belong to the old build, and
-the talk key then does nothing. Remove Speakeasy from **System Settings ›
-Privacy & Security › Accessibility** with **−** and add it again from the
-panel's checklist, or run:
-
-```sh
-tccutil reset Accessibility com.mschade.localstt
-```
-
-## Motivation
-
-The built-in system dictation is serviceable, but this offers a compact,
-modifiable, completely local substitute: a single shortcut, on-device speech
-recognition, and output that lands at the insertion point.
-
-## Transparency notice
-
-This project is mostly coded by AI. For someone like me, AI is a great help to
-finally get ideas done and out of their eternal alpha state. I know other people
-might see it differently, and that's why I want to be transparent about it.
-
-## Privacy & what "local" means here
-
-- **Completely on-device.** Conversion relies on Apple's local
-  `SpeechAnalyzer` / `SpeechTranscriber` (macOS 26). Audio is handled on your
-  machine and **never travels beyond it** — the utility ships without any
-  networking code at all.
-- **Confidential.** Nothing gets transmitted, reported to a server, or logged
-  remotely. The finished text is typed at the insertion point, and the app
-  itself keeps no copy of it.
-- **One honest caveat:** the first time a language model is used, macOS itself
-  may fetch that model from Apple as a system asset (the same route the OS uses
-  for its own dictation). The operating system performs that *model* download —
-  your **voice and transcripts go nowhere**.
-
-A pair of optional settings alters what is exposed on the machine, so each is
-**disabled out of the box**:
-
-- **Paste rather than type.** Considerably quicker for lengthy dictation,
-  though the transcript briefly occupies the general clipboard, readable by any
-  process running under your account. The earlier clipboard contents are put
-  back afterwards, and the entry is flagged as concealed so well-mannered
-  clipboard tools ignore it.
-- **Recent transcripts.** Retained **in memory exclusively** — never persisted
-  to disk and gone the moment you quit. There is intentionally no way to make
-  them permanent.
-
-Your word list and substitution rules *do* live on disk, inside
-`~/Library/Application Support/com.mschade.localstt/vocabulary.json`, written
-owner-only (`0600`) and never synchronized anywhere.
-
-## Under the hood
-
-- **SwiftUI `MenuBarExtra`** — the entire interface is a menu-bar agent
-  (`LSUIElement`, hence no Dock icon).
-- **Speech** — `SpeechAnalyzer` together with `SpeechTranscriber`, using the
-  `.progressiveTranscription` preset to stream partial results.
-- **AVFoundation** — an `AVAudioEngine` grabs the microphone while an
-  `AVAudioConverter` reshapes buffers into the format the analyzer expects.
-- **CoreAudio** — feeds the selected input device into the audio engine
-  (`kAudioHardwarePropertyTranslateUIDToDevice` plus
-  `kAudioOutputUnitProperty_CurrentDevice`).
-- **System-wide shortcut** — an active `CGEventTap` listens for the talk key
-  across the whole OS and *consumes* it (which is why holding it down doesn't
-  type the key).
-- **Live overlay (HUD)** — a translucent, focus-preserving, click-through
-  floating panel mirrors the transcript **while you talk**, then fades away
-  when you release. It never takes focus from the app receiving the dictation.
-  It is a capsule showing up to two lines of transcript (still-changing words
-  in grey) and a timer. Its coupe badge doubles as the input meter: the glass
-  fills with your voice, so a dead mic is obvious.
-- **Menu-bar icon** — the coupe from the app icon, drawn as a template image.
-  While you dictate it animates (liquid follows your voice, bubbles rise);
-  a dot marks missing permissions.
-- **Look** — "Mint on Ink", the app icon's palette (`Theme.swift`).
-- **Auto-typing** — when you release, the finished text is delivered at the
-  insertion point through synthesized Unicode `CGEvent` keystrokes, which works
-  in any application and **never involves the clipboard**.
-
-Source layout (`Sources/LocalSTT/`):
-
-| File | Responsibility |
-|------|----------------|
-| `App.swift` | Menu-bar app & `AppDelegate` startup sequence |
-| `AppModel.swift` | Coordinator connecting shortcut → capture → transform → output |
-| `Settings.swift` | All optional behaviour, stored in `UserDefaults` |
-| `MenuPanel.swift` | The dropdown panel, including the permissions checklist |
-| `Theme.swift` | Palette and shared controls (cards, rows with hover help, buttons) |
-| `CoupeGlyph.swift` | The coupe glyph: one geometry for menu bar, panel and overlay |
-| `HotkeyRecorder.swift` | Captures the talk shortcut, modifiers included |
-| `SettingsView.swift` | Preferences screen |
-| `VocabularyEditor.swift` | Editor for words and substitution rules |
-| `HUDController.swift` | Floating live-transcript capsule and its states |
-| `SnapshotRenderer.swift` | Debug builds only: renders every screen to PNG (see Tests) |
-| `TranscriberEngine.swift` | Audio + speech pipeline and its session state machine |
-| `AudioDeviceManager.swift` | Input-device discovery plus persisted choice |
-| `CoreAudioHelpers.swift` | Mapping device UIDs onto CoreAudio routing |
-| `HotkeyManager.swift` | The system-wide `CGEventTap` for push-to-talk |
-| `TextInjector.swift` | Keystroke and paste delivery |
-| `Permissions.swift` | Microphone / Speech / Accessibility gates |
-| `LoginItem.swift` | Login-item registration through `SMAppService` |
-
-Pure logic sits in its own library target, allowing unit tests without a
-microphone or permission prompts (`Sources/LocalSTTCore/`):
-
-| File | Responsibility |
-|------|----------------|
-| `Shortcut.swift` | Shortcut model, storage, display formatting |
-| `PushToTalkMatcher.swift` | Key events → press / release / swallow for the talk key |
-| `AudioMixdown.swift` | Multi-channel → mono mixing and level measurement |
-| `LevelSmoother.swift` | Attack/release easing applied to the level |
-| `TextTransformer.swift` | Exact-match substitution rules |
-| `TextChunker.swift` | Breaks text into keystroke-event-sized segments |
-| `TranscriptHistory.swift` | Bounded, memory-only transcript list |
-| `VocabularyStore.swift` | Vocabulary JSON with owner-only permissions |
-| `DeviceSelectionPolicy.swift` | Deciding which input device to use |
-| `CaptureFormatPolicy.swift` | Pre-dictation check of the mic's real format (input/output rate mismatch) |
-| `CoupeAnimation.swift` | The coupe's motion: liquid level, wave, bubbles |
-
-## Requirements
-
-- **macOS 26 (Tahoe) or newer** on Apple silicon.
-- **Xcode** or the **Xcode Command Line Tools** (Swift 6.2+). SwiftPM plus a
-  small packaging script do everything; the Xcode IDE itself is never opened.
-  - Command Line Tools: `xcode-select --install`
-  - With Command Line Tools 27.x, the macOS 27 SDK can't build the package.
-    `scripts/swiftw` (used by `build.sh` and `make`) detects this and builds
-    against an installed macOS 26 SDK with the native build system instead.
-    Full Xcode needs no workaround.
-
-## Building & running
-
-```sh
-# 1. (Recommended, once) create a stable self-signed code-signing certificate
-#    so macOS retains your permission approvals between rebuilds.
-#    Keychain Access ▸ Certificate Assistant ▸ Create a Certificate…
-#      Name: "LocalSTT Self-Signed"
-#      Identity Type: Self-Signed Root
-#      Certificate Type: Code Signing
-export CODESIGN_IDENTITY="LocalSTT Self-Signed"   # leave unset to ad-hoc sign
-
-# 2. Produce the app bundle.
-bash build.sh        # compiles, assembles and signs Speakeasy.app
-
-# 3. Start it.
-open Speakeasy.app
-```
-
-The app icon lives in `Resources/`: `AppIcon.svg` is the source and
-`AppIcon.icns` the generated file `build.sh` copies into the bundle. After
-editing the SVG, run `make icon` (`scripts/make-icon.sh`) to regenerate it.
-
-`build.sh` outputs `Speakeasy.app` at the project root. Without
-`CODESIGN_IDENTITY` it signs ad-hoc — that runs fine, but since the signature
-differs on each build, macOS drops your permission approvals every time you
-rebuild.
-
-Every build is signed with the **hardened runtime** and a single entitlement,
-microphone input (`Speakeasy.entitlements`). The hardened runtime stops other
-processes from injecting code into Speakeasy and borrowing its Microphone and
-Accessibility approvals. `build.sh` fails if either is missing from the
-signature.
-
-### Releasing
-
-Push a version tag; the Release workflow (`.github/workflows/release.yml`)
-tests, builds, stamps the version into `Info.plist`, zips the app and
-publishes it as a GitHub Release with install notes and a SHA-256:
-
-```sh
-git tag v1.0.1 && git push origin v1.0.1
-```
-
-Release builds are signed ad-hoc (the runner has no signing identity) and not
-notarised. Notarisation, which removes the "Open Anyway" step, needs a paid
-Apple Developer account.
-
-GitHub's macOS arm64 runners are sometimes never assigned and the job fails
-after a long queue. CI can be re-run by hand (`workflow_dispatch`). For a
-release, cancel the stuck run before publishing a locally built zip, so a late
-run can't collide with it.
-
-## Tests
-
-```sh
-make check      # build + tests (what CI runs)
-make test       # tests only
-```
-
-The test suite exercises `LocalSTTCore`, the logic requiring no hardware. The
-audio, permission and event-tap layers are checked manually. `scripts/test.sh`
-exists because swift-testing sits outside the default search paths when only
-the Command Line Tools are present; with full Xcode, plain `swift test`
-suffices.
-
-To check the UI without clicking through it, a debug build can render every
-panel screen, overlay state and menu-bar icon mode to PNGs, offscreen, using
-in-memory sample data (no permission prompts, nothing saved):
-
-```sh
-swift build -c debug
-.build/debug/LocalSTT --snapshot /tmp/speakeasy-snapshots
-```
-
-Controls draw in their inactive (grey) look in these images, since the
-offscreen window never becomes key.
-
-## Permissions (first run)
-
-Until all three are granted, the panel shows a checklist with the next step
-and the right button for it. macOS asks for three approvals; accept the
-prompts (or visit **System Settings ▸ Privacy & Security**):
-
-1. **Microphone** — so the app can hear you.
-2. **Speech Recognition** — which powers the local transcription.
-3. **Accessibility** — needed for the system-wide talk key and for typing the
-   outcome at the insertion point. This approval is not a pop-up: switch on
-   **Speakeasy** inside *Privacy & Security ▸ Accessibility*.
-
-## How to use
-
-1. Click the menu-bar icon to open the panel.
-2. Choose your **microphone**.
-3. Assign a **talk key** — open Preferences (gear), click **Change** next to
-   *Talk key*, then press whichever key you want to hold. (On laptops the function row emits *feature* keys by default,
-   so a plain `F5` might not come through; either hold `Fn` with the key, turn
-   on "Use F1, F2 as standard function keys" in Keyboard settings, or choose a
-   non-feature key such as **Right Control**.)
-4. Click into any text field, then **hold the key, talk, and release** → a
-   floating overlay mirrors the transcription while you speak, and the words
-   are typed at the insertion point when you let go. The menu-bar icon
-   animates during capture.
-
-Every preference has an ⓘ: hover it (or the row) for what the setting does.
-
-A lone modifier also works as the talk key: click **Change**, then tap and
-let go of a single modifier (say, Control). Bear in mind that macOS event flags
-carry no left/right information, so "Right Control" actually binds Control on
-either side.
-
-## Preferences
-
-Everything listed here is optional; the defaults recreate the original
-behaviour. Find them behind the gear in the panel.
-
-| Setting | Default | Effect |
-|---------|---------|--------|
-| Shortcut style | Hold the key to speak | Alternatively tap once to begin and again to finish, handy for long dictation. |
-| Escape discards | Off | Escape drops the in-progress dictation rather than typing it. Escape is intercepted only during an active dictation. |
-| Deliver text by | Typing | Alternatively pasting — far quicker for long text, with the clipboard trade-off noted above. |
-| Prefer my vocabulary | Off | Hands your words to the recognizer so names and jargon are transcribed correctly. |
-| Apply my find-and-replace rules | Off | Exact-match (never pattern) find/replace on the finished text. |
-| Remember recent transcripts | Off | The last 10, in memory only. |
-| Glass follows your voice | On | The coupe in the overlay fills with the input level, making a dead mic obvious. When off, it merely animates. |
-| Dictation language | en-US | Any locale `SpeechTranscriber` offers; macOS fetches the model on first use. |
-| Start automatically at login | Off | Registers a login item. Bound to the app's location, so leave it in `/Applications`. |
+<table>
+  <tr>
+    <td colspan="2" align="center">
+      <img src="docs/images/overlay.gif" width="568" alt="The overlay filling with words as they are spoken, newest in grey, then a check mark once typed"><br>
+      <b>Live overlay</b>: see the words as you speak, without losing focus
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/images/glass.gif" width="112" alt="The coupe glass filling and sloshing with the voice level"><br>
+      <b>The glass fills with your voice</b>,<br>so a dead mic is obvious
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/images/menubar.gif" width="240" alt="The menu-bar icon on a light and a dark menu bar, cycling through its states"><br>
+      <b>Lives in the menu bar</b>,<br>no window, no Dock icon
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top">
+      <img src="docs/images/vocabulary.png" width="340" alt="Vocabulary: words like Speakeasy, SwiftUI and Johnny.Decimal"><br>
+      <b>Your vocabulary</b>: names and jargon spelled your way
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/images/find-replace.png" width="340" alt="Find and replace rules such as eye phone to iPhone"><br>
+      <b>Find & replace</b>: “eye phone” → “iPhone”
+    </td>
+  </tr>
+</table>
+
+**Also:** hold or tap-to-toggle · any key or lone modifier as talk key · Escape to discard · every language Apple's on-device recogniser offers · any microphone, including multi-channel interfaces · a warning when the mic delivers no audio · recent transcripts kept in memory only · guided first run · start at login.
+
+## Privacy
+
+> [!NOTE]
+> **Audio and text never leave your Mac.** Speech recognition runs on-device with Apple's `SpeechAnalyzer`, and Speakeasy contains no networking code at all.
+
+- The first time you use a language, macOS may download its speech model from Apple, the same way system dictation does. Your voice and transcripts are never part of that.
+- Text is typed as keystrokes and never touches the clipboard. The optional **paste mode** is faster but briefly puts the text on the clipboard.
+- **Recent transcripts** (off by default) live in memory only and are gone when you quit.
+- Your word list and rules are stored in `~/Library/Application Support/com.mschade.localstt/vocabulary.json`, readable only by you.
+
+## Build from source
+
+> [!TIP]
+> Needs **macOS 26** on Apple silicon and **Xcode** or the Command Line Tools (`xcode-select --install`).
+> ```sh
+> bash build.sh          # builds, packages and signs Speakeasy.app
+> open Speakeasy.app
+> make check             # build + tests, what CI runs
+> ```
+
+<details>
+<summary><b>Keep your permissions across rebuilds</b></summary>
+
+Without a stable signing identity, `build.sh` signs ad-hoc. That works, but macOS forgets the permissions on every rebuild. Create a self-signed certificate once in **Keychain Access › Certificate Assistant › Create a Certificate…** with the name `LocalSTT Self-Signed`, identity type *Self-Signed Root* and certificate type *Code Signing*. `build.sh` picks it up automatically (or set `CODESIGN_IDENTITY`).
+
+</details>
 
 ## Troubleshooting
 
-**The mic runs but nothing is transcribed.** Before every dictation the app
-compares the mic's real sample rate with the one `AVAudioEngine` reports. They
-differ when the input and output devices run at different rates (for example
-mic at 48 kHz, speakers at 44.1 kHz after playing music), and a tap at the
-reported rate silently receives nothing. The app taps at the hardware rate
-instead. If audio still doesn't arrive, the overlay turns orange with
-"No audio from the microphone" while you hold the key. Capture logs live under
-subsystem `com.mschade.localstt`:
+<details>
+<summary><b>The talk key does nothing</b></summary>
+
+Check the panel's checklist: Accessibility must be allowed. After an update, see the tip under [Install](#install). On a MacBook the function row sends its special functions by default, so hold <kbd>fn</kbd> with <kbd>F5</kbd>, or choose another talk key such as Right Control.
+
+</details>
+
+<details>
+<summary><b>The mic runs but nothing is transcribed</b></summary>
+
+If no audio arrives, the overlay turns amber and says so while you hold the key. Pick another input in the panel or check it in Audio MIDI Setup. Capture logs:
 
 ```sh
-log show --last 10m --predicate 'subsystem == "com.mschade.localstt"'
+/usr/bin/log show --last 10m --predicate 'subsystem == "com.mschade.localstt"'
 ```
 
-**The talk key does nothing after an update.** See *Updating* under
-[Download](#download): the Accessibility approval belongs to the old build.
+</details>
 
-**A dictation finished on its own after 10 minutes.** That's the safety cap.
-If the key's release is ever lost (for example, a password field switched on
-Secure Input while you held it), the microphone must not stay open
-indefinitely. The text up to that point is delivered as usual.
+<details>
+<summary><b>A dictation finished on its own after 10 minutes</b></summary>
 
-## Additional notes
+That's a safety cap, so the microphone can never stay open indefinitely if a key release gets lost. Everything said up to then is typed as usual.
 
-- Not sandboxed and not meant for the App Store, but signed with the hardened
-  runtime (see *Building & running*).
-- The default language is **en-US**; it can be changed in the preferences.
+</details>
+
+---
+
+## Under the hood
+
+<details>
+<summary><b>Preferences</b></summary>
+
+All optional; the defaults just work.
+
+| Setting | Default | Effect |
+|---------|---------|--------|
+| Shortcut | Hold to talk | Or tap once to start and again to finish, for long dictation. |
+| Talk key | F5 | Any key, combination or lone modifier. macOS can't tell left from right modifiers. |
+| Escape discards | Off | Escape throws the dictation away; only intercepted while dictating. |
+| Deliver text by | Typing | Or pasting: faster for long text, but uses the clipboard briefly. |
+| Prefer my words | Off | Hands your word list to the recogniser. |
+| Apply find & replace | Off | Exact-match swaps on the finished text, never patterns. |
+| Remember recent transcripts | Off | The last 10, in memory only. |
+| Glass follows your voice | On | The coupe fills with your input level. |
+| Dictation language | en-US | Any language `SpeechTranscriber` offers. |
+| Open at login | Off | Keep the app in `/Applications` for this. |
+
+</details>
+
+<details>
+<summary><b>How it works</b></summary>
+
+- **SwiftUI `MenuBarExtra`** agent (`LSUIElement`), so no Dock icon.
+- **Speech:** `SpeechAnalyzer` + `SpeechTranscriber` with `.progressiveTranscription` for live partial results.
+- **Audio:** a fresh `AVAudioEngine` per dictation, routed to the chosen device through CoreAudio. Multi-channel input is mixed to mono by hand, and the tap uses the hardware's real sample rate, which fixes silent capture when input and output run at different rates.
+- **Talk key:** an active `CGEventTap` that swallows the key so it isn't typed.
+- **Typing:** synthesised Unicode `CGEvent` keystrokes, aborted if focus moves to another app.
+- **Signing:** hardened runtime with a single entitlement, microphone input (`Speakeasy.entitlements`). `build.sh` refuses to package without it.
+
+</details>
+
+<details>
+<summary><b>Source layout</b></summary>
+
+`Sources/LocalSTT/` is the app; `Sources/LocalSTTCore/` holds the logic with no audio, AppKit or permission dependencies, so it's unit-tested.
+
+| File | Responsibility |
+|------|----------------|
+| `AppModel.swift` | Coordinator: talk key → capture → transform → typing |
+| `TranscriberEngine.swift` | Audio + speech pipeline and its session state machine |
+| `HotkeyManager.swift` | The system-wide `CGEventTap` |
+| `TextInjector.swift` | Keystroke and paste delivery |
+| `MenuPanel.swift`, `SettingsView.swift`, `VocabularyEditor.swift` | The panel's screens |
+| `HUDController.swift` | The floating overlay |
+| `Theme.swift`, `CoupeGlyph.swift` | Palette, shared controls and the coupe glyph |
+| `Permissions.swift`, `LoginItem.swift` | Microphone / Speech / Accessibility and login item |
+| `SnapshotRenderer.swift` | Debug only: renders every screen and the README images |
+| Core: `PushToTalkMatcher`, `Shortcut` | Talk-key matching and storage |
+| Core: `AudioMixdown`, `CaptureFormatPolicy`, `LevelSmoother` | Mono mix, tap format, level easing |
+| Core: `TextTransformer`, `TextChunker`, `VocabularyStore`, `TranscriptHistory` | Text rules, typing chunks, vocabulary file, memory-only history |
+
+</details>
+
+<details>
+<summary><b>Development</b></summary>
+
+- **Tests:** `make check` (build + tests) or `make test`. The audio, permission and event-tap layers are tested by hand.
+- **Command Line Tools 27:** their macOS 27 SDK can't build the package; `scripts/swiftw` (used by `build.sh` and `make`) then builds against an installed macOS 26 SDK. Full Xcode needs no workaround.
+- **Screens without clicking:** `swift build -c debug && .build/debug/LocalSTT --snapshot <dir>` renders every screen, overlay state and the animations to PNG/GIF with sample data. `scripts/readme-images.sh` turns them into the images in `docs/images/`.
+- **App icon:** edit `Resources/AppIcon.svg`, then `make icon`.
+- **Releasing:** push a tag (`git tag v1.2.3 && git push origin v1.2.3`); the Release workflow tests, builds, signs ad-hoc, zips and publishes. If GitHub never assigns a macOS runner, cancel the run before publishing a local build.
+
+</details>
 
 ## License
 
-Speakeasy is free software under the [GNU General Public License v3.0](LICENSE).
-You may use, study, change and share it. If you distribute a modified version,
-it must be under the GPL too, with its source code available.
+Free software under the [GNU General Public License v3.0](LICENSE): use, study, change and share it. Modified versions you distribute must be GPL too, with their source.

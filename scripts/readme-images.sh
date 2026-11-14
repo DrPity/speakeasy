@@ -20,28 +20,12 @@ crop() {
     sips -c "$3" 728 --cropOffset "$2" 16 "${WORK}/$1.png" --out "${OUT}/$4.png" >/dev/null
 }
 
-# Main panel
-crop panel-ready             160 158 talk-key
-crop panel-ready             330 115 microphone
-crop panel-ready             712 278 recent
-# Preferences
-crop panel-settings          166 178 hold-or-toggle
-crop panel-settings          349 162 escape
-crop panel-settings          722 318 hover-help
-crop panel-settings         1335 135 language
-crop panel-settings         1470  96 login
-# Vocabulary
+# Vocabulary screen
 crop panel-vocabulary        128 504 vocabulary
 crop panel-vocabulary        650 612 find-replace
-# First run
-cp "${WORK}/panel-onboarding-step1.png" "${OUT}/first-run.png"
-crop panel-onboarding-step1  780 180 private
-# Overlay and animations
-cp "${WORK}/hud-3-no-audio.png" "${OUT}/no-audio.png"
+# Animations
 cp "${WORK}/anim-overlay.gif" "${OUT}/overlay.gif"
 cp "${WORK}/anim-glass.gif" "${OUT}/glass.gif"
 cp "${WORK}/anim-menubar.gif" "${OUT}/menubar.gif"
-# Typing into another app: a still from the demo GIF (marketing/gifs).
-sips -Z 1200 marketing/gifs/dictation-demo/final/stills/04-typed-into-the-note.png --out "${OUT}/types-anywhere.png" >/dev/null
 
 echo "Wrote $(ls "${OUT}" | wc -l | tr -d ' ') images to ${OUT}/"

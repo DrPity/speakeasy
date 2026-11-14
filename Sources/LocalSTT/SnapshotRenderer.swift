@@ -54,6 +54,8 @@ enum SnapshotRenderer {
         render(panel(MenuPanel()), "panel-onboarding-step1", into: directory)
         allowed()
         render(panel(SettingsView(screen: .constant(.settings))), "panel-settings", into: directory)
+        // As the window shows it: the scroll area at its real height.
+        render(panel(SettingsView(screen: .constant(.settings)), scrolling: true), "panel-settings-window", into: directory)
         render(panel(VocabularyEditor(screen: .constant(.vocabulary))), "panel-vocabulary", into: directory)
 
         // Overlay states.
@@ -98,9 +100,10 @@ enum SnapshotRenderer {
 
     // MARK: - Helpers
 
-    private static func panel<V: View>(_ view: V) -> some View {
+    /// `scrolling: false` drops the scroll view to draw the whole screen.
+    private static func panel<V: View>(_ view: V, scrolling: Bool = false) -> some View {
         view
-            .environment(\.panelScrollCap, .infinity)   // whole screen, no scroll view
+            .environment(\.panelScrollCap, scrolling ? PanelScrollCapKey.defaultValue : .infinity)
             .padding(16)
             .frame(width: 380)
             .background(Theme.panel)
