@@ -45,36 +45,13 @@ Change the talk key, switch to tap-to-toggle or pick another language behind the
 
 ## Features
 
-<table>
-  <tr>
-    <td colspan="2" align="center">
-      <img src="docs/images/overlay.gif" width="568" alt="The overlay filling with words as they are spoken, newest in grey, then a check mark once typed"><br>
-      <b>Live overlay</b>: see the words as you speak, without losing focus
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/images/glass.gif" width="112" alt="The coupe glass filling and sloshing with the voice level"><br>
-      <b>The glass fills with your voice</b>,<br>so a dead mic is obvious
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/images/menubar.gif" width="240" alt="The menu-bar icon on a light and a dark menu bar, cycling through its states"><br>
-      <b>Lives in the menu bar</b>,<br>no window, no Dock icon
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="top">
-      <img src="docs/images/vocabulary.png" width="340" alt="Vocabulary: words like Speakeasy, SwiftUI and Johnny.Decimal"><br>
-      <b>Your vocabulary</b>: names and jargon spelled your way
-    </td>
-    <td align="center" valign="top">
-      <img src="docs/images/find-replace.png" width="340" alt="Find and replace rules such as eye phone to iPhone"><br>
-      <b>Find & replace</b>: “eye phone” → “iPhone”
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="docs/images/card-overlay.gif" width="380" alt="See the words as you speak: a live overlay that never steals focus"> <img src="docs/images/card-glass.gif" width="380" alt="The glass fills with your voice, so a dead microphone is obvious"><br>
+  <img src="docs/images/card-talk-key.png" width="380" alt="Your key, your way: hold to talk or tap to toggle, any key"> <img src="docs/images/card-menubar.gif" width="380" alt="Lives in the menu bar: no window, no Dock icon"><br>
+  <img src="docs/images/card-vocabulary.png" width="380" alt="Your vocabulary: names and jargon spelled your way"> <img src="docs/images/card-find-replace.png" width="380" alt="Find and replace: eye phone becomes iPhone">
+</p>
 
-**Also:** hold or tap-to-toggle · any key or lone modifier as talk key · Escape to discard · every language Apple's on-device recogniser offers · any microphone, including multi-channel interfaces · a warning when the mic delivers no audio · recent transcripts kept in memory only · guided first run · start at login.
+**Also:** a lone modifier such as Control as talk key · Escape to discard · every language Apple's on-device recogniser offers · any microphone, including multi-channel interfaces · a warning when the mic delivers no audio · recent transcripts kept in memory only · guided first run · start at login.
 
 ## Privacy
 

@@ -53,10 +53,12 @@ enum SnapshotRenderer {
         model.permissions.overrideForSnapshot(microphone: .undetermined, speech: .undetermined, accessibility: false)
         render(panel(MenuPanel()), "panel-onboarding-step1", into: directory)
         allowed()
-        render(panel(SettingsView(screen: .constant(.settings))), "panel-settings", into: directory)
+        let settings = capture(panel(SettingsView(screen: .constant(.settings))))
+        settings.map { write($0, "panel-settings", into: directory) }
         // As the window shows it: the scroll area at its real height.
         render(panel(SettingsView(screen: .constant(.settings)), scrolling: true), "panel-settings-window", into: directory)
-        render(panel(VocabularyEditor(screen: .constant(.vocabulary))), "panel-vocabulary", into: directory)
+        let vocabulary = capture(panel(VocabularyEditor(screen: .constant(.vocabulary))))
+        vocabulary.map { write($0, "panel-vocabulary", into: directory) }
 
         // Overlay states.
         let start = Date().addingTimeInterval(-4)
@@ -86,10 +88,8 @@ enum SnapshotRenderer {
             writeIcon(MenuBarIcon.image(mode: mode, level: level, time: 0.35), "icon-\(name)", into: directory)
         }
 
-        // Animations.
-        renderOverlayGIF(into: directory)
-        renderGlassGIF(into: directory)
-        renderMenuBarGIF(into: directory)
+        // README feature cards (scripts/readme-images.sh).
+        renderFeatureCards(settings: settings?.cgImage, vocabulary: vocabulary?.cgImage, into: directory)
         engine.finalText = ""
         engine.partialText = ""
 
@@ -111,8 +111,8 @@ enum SnapshotRenderer {
             .tint(Theme.mint)
     }
 
-    private static func hud() -> some View {
-        HUDView().background(Color(hex: 0x3A4150))
+    private static func hud(background: Color = Color(hex: 0x3A4150)) -> some View {
+        HUDView().background(background)
     }
 
     private static func render<V: View>(_ view: V, _ name: String, into directory: URL, height: CGFloat? = nil) {
@@ -155,16 +155,89 @@ enum SnapshotRenderer {
         write(rep, name, into: directory)
     }
 
+    // MARK: - README feature cards
+
+    /// Six equal cards for the README's feature grid: the visual on an inset
+    /// "screen", title and caption below, rounded corners baked in (GitHub
+    /// strips CSS). Crops are pixel rectangles inside a group's background in
+    /// the full-length 2× renders, so no hard edge shows on the screen.
+    private static func renderFeatureCards(settings: CGImage?, vocabulary: CGImage?, into directory: URL) {
+        func crop(_ image: CGImage?, x: Int, y: Int, width: Int, height: Int) -> CGImage? {
+            image?.cropping(to: CGRect(x: x, y: y, width: width, height: height))
+        }
+        func still(_ visual: CGImage?, _ name: String, _ title: String, _ subtitle: String, screen: Color) {
+            guard let visual, let card = card(visual, title: title, subtitle: subtitle, screen: screen) else { return }
+            writePNG(card, name, into: directory)
+        }
+        func animated(_ frames: [(image: CGImage, delay: Double)], _ name: String, _ title: String, _ subtitle: String) {
+            let cards = frames.compactMap { frame in
+                card(frame.image, title: title, subtitle: subtitle, screen: Theme.panel)
+                    .flatMap(hardenAlpha)
+                    .map { (image: $0, delay: frame.delay) }
+            }
+            writeGIF(cards, name, into: directory)
+        }
+
+        animated(overlayFrames(), "card-overlay", "See the words as you speak", "A live overlay that never steals focus")
+        animated(glassFrames(), "card-glass", "The glass fills with your voice", "So a dead microphone is obvious")
+        animated(menuBarFrames(), "card-menubar", "Lives in the menu bar", "No window, no Dock icon")
+        still(crop(settings, x: 40, y: 186, width: 680, height: 160), "card-talk-key",
+              "Your key, your way", "Hold to talk or tap to toggle, any key", screen: Theme.card)
+        still(crop(vocabulary, x: 40, y: 236, width: 680, height: 294), "card-vocabulary",
+              "Your vocabulary", "Names and jargon spelled your way", screen: Theme.card)
+        still(crop(vocabulary, x: 40, y: 792, width: 680, height: 348), "card-find-replace",
+              "Find & replace", "“eye phone” becomes “iPhone”", screen: Theme.card)
+    }
+
+    private static func card(_ visual: CGImage, title: String, subtitle: String, screen: Color) -> CGImage? {
+        let renderer = ImageRenderer(content: FeatureCard(visual: visual, title: title, subtitle: subtitle, screen: screen))
+        renderer.scale = 2
+        renderer.isOpaque = false
+        return renderer.cgImage
+    }
+
+    /// GIF transparency is on or off. Left to ImageIO, the card's soft
+    /// rounded edge turns into a light ring that shows on dark pages; snapping
+    /// each pixel to transparent or to its own colour, fully opaque, keeps the
+    /// edge the card's colour on any background.
+    private static func hardenAlpha(_ image: CGImage) -> CGImage? {
+        let width = image.width, height = image.height
+        guard let context = CGContext(
+            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ), let data = context.data else { return nil }
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        let pixels = data.bindMemory(to: UInt8.self, capacity: width * height * 4)
+        for offset in stride(from: 0, to: width * height * 4, by: 4) {
+            let alpha = Int(pixels[offset + 3])
+            if alpha == 255 { continue }
+            if alpha < 128 {
+                pixels[offset] = 0; pixels[offset + 1] = 0; pixels[offset + 2] = 0; pixels[offset + 3] = 0
+            } else {
+                for channel in 0..<3 {
+                    pixels[offset + channel] = UInt8(min(255, Int(pixels[offset + channel]) * 255 / alpha))
+                }
+                pixels[offset + 3] = 255
+            }
+        }
+        return context.makeImage()
+    }
+
+    private static func writePNG(_ image: CGImage, _ name: String, into directory: URL) {
+        write(NSBitmapImageRep(cgImage: image), name, into: directory)
+    }
+
     // MARK: - Animations
 
     /// The overlay while dictating: listening, words arriving (the newest
     /// still grey), then the ✓ once the text is typed.
-    private static func renderOverlayGIF(into directory: URL) {
+    private static func overlayFrames() -> [(image: CGImage, delay: Double)] {
         let model = AppModel.shared
         let engine = model.engine
-        var frames: [(CGImage, Double)] = []
+        var frames: [(image: CGImage, delay: Double)] = []
         func add(_ delay: Double) {
-            if let image = capture(hud())?.cgImage { frames.append((image, delay)) }
+            if let image = capture(hud(background: Theme.panel))?.cgImage { frames.append((image, delay)) }
         }
         let words = "Pair with Lea on the onboarding copy, then review the vocabulary edit before lunch."
             .split(separator: " ").map(String.init)
@@ -189,28 +262,26 @@ enum SnapshotRenderer {
         model.overrideForSnapshot(delivered: words.joined(separator: " "), sessionStart: Date().addingTimeInterval(-6))
         add(2.2)
         model.overrideForSnapshot(delivered: nil, sessionStart: nil)
-        writeGIF(frames, "anim-overlay", into: directory)
+        return frames
     }
 
     /// The coupe filling and sloshing with a speech-like input level, eased
     /// by the same `LevelSmoother` the app applies to the real microphone.
-    private static func renderGlassGIF(into directory: URL) {
-        let fps = 20.0
+    private static func glassFrames() -> [(image: CGImage, delay: Double)] {
+        let fps = 12.0   // the glass changes every frame, so frames are what costs file size
         var smoother = LevelSmoother()
-        var frames: [(CGImage, Double)] = []
+        var frames: [(image: CGImage, delay: Double)] = []
         for index in 0..<Int(fps * 5) {
             let time = Double(index) / fps
             smoother.update(toward: Float(speechLevel(at: time)))
-            let view = CoupeGlyphView(mode: .listening, level: Double(smoother.value), size: 96, frozenTime: time)
-                .frame(width: 136, height: 136)
+            let view = CoupeGlyphView(mode: .listening, level: Double(smoother.value), size: 84, frozenTime: time)
+                .frame(width: 120, height: 120)
                 .background(Theme.raised, in: Circle())
-                .padding(20)
-                .background(Theme.ink)
             let renderer = ImageRenderer(content: view)
             renderer.scale = 2
             if let image = renderer.cgImage { frames.append((image, 1 / fps)) }
         }
-        writeGIF(frames, "anim-glass", into: directory)
+        return frames
     }
 
     /// Phrases of syllable-like bursts separated by pauses, 0...1.
@@ -224,10 +295,10 @@ enum SnapshotRenderer {
 
     /// The menu-bar icon through its states, on a light and a dark menu bar:
     /// idle → listening (following the voice) → finishing → needs setup.
-    private static func renderMenuBarGIF(into directory: URL) {
-        let fps = 15.0
+    private static func menuBarFrames() -> [(image: CGImage, delay: Double)] {
+        let fps = 10.0
         var smoother = LevelSmoother()
-        var frames: [(CGImage, Double)] = []
+        var frames: [(image: CGImage, delay: Double)] = []
         func add(_ mode: CoupeAnimation.Mode, level: Double, time: Double, delay: Double) {
             if let image = menuBarFrame(MenuBarIcon.image(mode: mode, level: level, time: time)) {
                 frames.append((image, delay))
@@ -244,7 +315,7 @@ enum SnapshotRenderer {
         }
         add(.idle, level: 0, time: 0, delay: 1.0)
         add(.needsSetup, level: 0, time: 0, delay: 1.6)
-        writeGIF(frames, "anim-menubar", into: directory)
+        return frames
     }
 
     /// Two menu-bar tiles side by side, the template icon drawn black on light
@@ -258,6 +329,7 @@ enum SnapshotRenderer {
         ) else { return nil }
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        NSBezierPath(roundedRect: NSRect(x: 0, y: 0, width: tile.width * 2, height: tile.height), xRadius: 20, yRadius: 20).addClip()
         for (index, (background, foreground)) in [(NSColor(white: 0.93, alpha: 1), NSColor.black),
                                                   (NSColor(white: 0.16, alpha: 1), NSColor.white)].enumerated() {
             let origin = CGFloat(index) * tile.width
@@ -299,6 +371,54 @@ enum SnapshotRenderer {
     private static func write(_ rep: NSBitmapImageRep, _ name: String, into directory: URL) {
         guard let data = rep.representation(using: .png, properties: [:]) else { return }
         try? data.write(to: directory.appendingPathComponent("\(name).png"))
+    }
+}
+
+/// One README feature card. Every card has the same size and layout, so the
+/// grid lines up whatever the visual's shape.
+private struct FeatureCard: View {
+    let visual: CGImage
+    let title: String
+    let subtitle: String
+    let screen: Color
+
+    static let width: CGFloat = 400
+    static let screenSize = CGSize(width: 360, height: 168)
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Image(decorative: visual, scale: 2)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: fitted.width, height: fitted.height)
+                .frame(width: Self.screenSize.width, height: Self.screenSize.height)
+                .background(screen)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
+            Text(title)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(Theme.glass)
+                .padding(.top, 16)
+            Text(subtitle)
+                .font(.system(size: 13.5))
+                .foregroundStyle(Theme.tertiary)
+                .padding(.top, 4)
+        }
+        .padding(20)
+        .frame(width: Self.width, alignment: .leading)
+        .background(Theme.ink)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.border))
+        .padding(6)   // transparent gutter, so cards placed side by side keep a gap
+        .environment(\.colorScheme, .dark)
+    }
+
+    /// The visual at its natural size, shrunk (never enlarged) to sit inside
+    /// the screen with a margin.
+    private var fitted: CGSize {
+        let natural = CGSize(width: CGFloat(visual.width) / 2, height: CGFloat(visual.height) / 2)
+        let scale = min(1, Self.screenSize.width * 0.94 / natural.width, Self.screenSize.height * 0.88 / natural.height)
+        return CGSize(width: natural.width * scale, height: natural.height * scale)
     }
 }
 #endif
